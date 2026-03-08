@@ -10,13 +10,16 @@ class UserController extends Controller
 {
     // GET/users
     public function index(){
-        $users = User::all();
+        $users = User::select('id','name','email','phone')->get();
         return response()->json($users,200,[],JSON_UNESCAPED_UNICODE);
     }
 
     // GET/users/1
     public function show($id){
-        return response()->json(User::findOrFail($id));
+        $user=User::select('id','name','email','phone')->findOrFail($id);
+        return response()->json($user);
     }
 
+    //test git hub add branch user
+    //test thành viên push vào feature users
 }
