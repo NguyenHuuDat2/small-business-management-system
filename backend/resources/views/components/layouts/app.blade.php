@@ -46,7 +46,7 @@ d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
 
 ];
 
-$pageTitle = $title ?? 'NHÓM 15_T4_SANG';
+$pageTitle = $title ?? 'Nhóm 15(T4C1)- Hệ thống Admin (Livewire Backend) | API Endpoint: domain(here)/api/...';
 
 @endphp
 
