@@ -32,7 +32,7 @@ class Users extends Component
         'name' => 'required|min:2',
         'email' => 'required|email',
         'phone' => 'nullable'
-    ];git branch
+    ];
 
     public function render()
     {
