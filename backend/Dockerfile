@@ -17,8 +17,8 @@ COPY . .
 
 RUN composer install --no-dev --optimize-autoloader
 
-# Clear cache Laravel để đọc ENV mới
 RUN php artisan config:clear
 RUN php artisan cache:clear
+RUN php artisan view:clear
 
 CMD php artisan serve --host=0.0.0.0 --port=$PORT
