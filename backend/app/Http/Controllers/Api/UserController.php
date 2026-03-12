@@ -20,6 +20,6 @@ class UserController extends Controller
         return response()->json($user);
     }
 
-    //test git hub add branch user
-    //test thành viên push vào feature users
+    //Dat join user
+    // ng tiep theo viet o day
 }
