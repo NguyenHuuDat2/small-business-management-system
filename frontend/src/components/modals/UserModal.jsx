@@ -1,6 +1,7 @@
 import { useState } from "react";
+import userService from "../../services/userService";
 
-function UserModal({ isOpen, onClose }) {
+function UserModal({ isOpen, onClose, reloadUsers }) {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -8,20 +9,32 @@ function UserModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log({
-      name,
-      email,
-      phone
-    });
+    try {
 
-    onClose();
+      await userService.create({
+        name,
+        email,
+        phone
+      });
+
+      reloadUsers(); // reload table
+      onClose();
+
+      setName("");
+      setEmail("");
+      setPhone("");
+
+    } catch (err) {
+
+      console.log("Create error:", err);
+
+    }
   };
 
   return (
-
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
 
       <div className="bg-white p-6 rounded-lg w-96">
