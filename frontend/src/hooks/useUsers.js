@@ -9,7 +9,7 @@ export default function useUsers() {
     try {
 
       const res = await getUsers();
-      setUsers(res.data);
+      setUsers(res.data.data);
 
     } catch (err) {
 
