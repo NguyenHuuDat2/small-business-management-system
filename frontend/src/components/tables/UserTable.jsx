@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import UserModal from "../modals/UserModal";
 import userService from "../../services/userService";
+import toast from "react-hot-toast";
 
 function UserTable({ users, reloadUsers }) {
 
@@ -14,25 +15,30 @@ function UserTable({ users, reloadUsers }) {
 
 
   // DELETE USER
-const handleDelete = async (id) => {
+  const handleDelete = async (id) => {
 
-  const confirmDelete = window.confirm("Bạn chắc chắn muốn xoá nhân viên này?");
+    const confirmDelete = window.confirm("Bạn chắc chắn muốn xoá nhân viên này?");
 
-  if (!confirmDelete) return;
+    if (!confirmDelete) return;
 
-  try {
+    try {
 
-    await userService.remove(id);
+      await userService.remove(id);
 
-    reloadUsers();
+      toast.success("Xoá nhân viên thành công");
 
-  } catch (err) {
+      reloadUsers();
 
-    console.log("Delete error:", err);
+    } catch (err) {
 
-  }
+      toast.error("Xoá nhân viên thất bại");
+      console.log("Delete error:", err);
 
-};
+    }
+
+  };
+
+
 
   // SEARCH
   const filteredUsers = (users || []).filter((user) =>
