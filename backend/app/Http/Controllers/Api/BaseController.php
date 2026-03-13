@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class BaseController extends Controller
 {
@@ -35,12 +36,19 @@ class BaseController extends Controller
     // POST
     public function store(Request $request)
     {
-        $data = $this->model::create($request->all());
+        $data = $request->all();
+
+        //bảng users tự tạo password
+        if ($this->model === \App\Models\User::class) {
+            $data['password'] = Hash::make('123456');
+        }
+
+        $record = $this->model::create($data);
 
         return response()->json([
             "success" => true,
             "message" => "Tạo thành công",
-            "data" => $data
+            "data" => $record
         ],201,[],JSON_UNESCAPED_UNICODE);
     }
 
