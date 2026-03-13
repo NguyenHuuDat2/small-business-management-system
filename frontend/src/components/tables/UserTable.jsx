@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import UserModal from "../modals/UserModal";
-import { deleteUser } from "../../services/userService";
+import userService from "../../services/userService";
 
 function UserTable({ users, reloadUsers }) {
 
@@ -12,25 +12,25 @@ function UserTable({ users, reloadUsers }) {
   const [openModal, setOpenModal] = useState(false);
 
   // DELETE USER
-  const handleDelete = async (id) => {
+const handleDelete = async (id) => {
 
-    const confirmDelete = window.confirm("Bạn chắc chắn muốn xoá nhân viên này?");
+  const confirmDelete = window.confirm("Bạn chắc chắn muốn xoá nhân viên này?");
 
-    if (!confirmDelete) return;
+  if (!confirmDelete) return;
 
-    try {
+  try {
 
-      await deleteUser(id);
+    await userService.remove(id);
 
-      reloadUsers();
+    reloadUsers();
 
-    } catch (err) {
+  } catch (err) {
 
-      console.log("Delete error:", err);
+    console.log("Delete error:", err);
 
-    }
+  }
 
-  };
+};
 
   // SEARCH
   const filteredUsers = users.filter((user) =>
