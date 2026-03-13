@@ -1,11 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import userService from "../../services/userService";
 
-function UserModal({ isOpen, onClose, reloadUsers }) {
+function UserModal({ isOpen, onClose, reloadUsers, user }) {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+
+  // Khi chọn user để sửa → đổ dữ liệu vào form
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+    } else {
+      setName("");
+      setEmail("");
+      setPhone("");
+    }
+  }, [user]);
 
   if (!isOpen) return null;
 
@@ -14,33 +27,46 @@ function UserModal({ isOpen, onClose, reloadUsers }) {
 
     try {
 
-      await userService.create({
-        name,
-        email,
-        phone
-      });
+      if (user) {
+        // UPDATE
+        await userService.update(user.id, {
+          name,
+          email,
+          phone
+        });
 
-      reloadUsers(); // reload table
+        alert("Cập nhật nhân viên thành công");
+
+      } else {
+        // CREATE
+        await userService.create({
+          name,
+          email,
+          phone
+        });
+
+        alert("Thêm nhân viên thành công");
+      }
+
+      reloadUsers();
       onClose();
-
-      setName("");
-      setEmail("");
-      setPhone("");
 
     } catch (err) {
 
-      console.log("Create error:", err);
+      alert("Có lỗi xảy ra");
+      console.log(err);
 
     }
   };
 
   return (
+
     <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
 
       <div className="bg-white p-6 rounded-lg w-96">
 
         <h2 className="text-xl font-bold mb-4">
-          Thêm nhân viên
+          {user ? "Sửa nhân viên" : "Thêm nhân viên"}
         </h2>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">

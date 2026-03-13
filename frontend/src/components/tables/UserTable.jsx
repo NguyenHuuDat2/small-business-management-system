@@ -10,6 +10,8 @@ function UserTable({ users, reloadUsers }) {
   const [limit, setLimit] = useState(5);
   const [page, setPage] = useState(1);
   const [openModal, setOpenModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+
 
   // DELETE USER
 const handleDelete = async (id) => {
@@ -138,6 +140,10 @@ const handleDelete = async (id) => {
                 {/* EDIT */}
 
                 <button
+                  onClick={() => {
+                    setEditingUser(user);
+                    setOpenModal(true);
+                  }}
                   className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
                 >
                   <FaEdit />
@@ -193,9 +199,14 @@ const handleDelete = async (id) => {
 
       <UserModal
         isOpen={openModal}
-        onClose={() => setOpenModal(false)}
+        onClose={() => {
+          setOpenModal(false);
+          setEditingUser(null);
+        }}
         reloadUsers={reloadUsers}
+        user={editingUser}
       />
+
 
     </div>
 
