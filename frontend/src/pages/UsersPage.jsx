@@ -1,9 +1,14 @@
-import useUsers from "../hooks/useUsers";
+import useCrud from "../hooks/useCrud";
+import userService from "../services/userService";
 import UserTable from "../components/tables/UserTable";
 
 function UsersPage() {
 
-  const { users, fetchUsers } = useUsers();
+  const {
+    data: users,
+    fetchData,
+    deleteItem
+  } = useCrud(userService);
 
   return (
 
@@ -15,7 +20,8 @@ function UsersPage() {
 
       <UserTable
         users={users}
-        reloadUsers={fetchUsers}
+        reloadUsers={fetchData}
+        deleteUser={deleteItem}
       />
 
     </div>

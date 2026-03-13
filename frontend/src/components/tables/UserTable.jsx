@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import UserModal from "../modals/UserModal";
-import { deleteUser } from "../../services/userService";
+import userService from "../../services/userService";
+import toast from "react-hot-toast";
 
 function UserTable({ users, reloadUsers }) {
 
@@ -10,6 +11,8 @@ function UserTable({ users, reloadUsers }) {
   const [limit, setLimit] = useState(5);
   const [page, setPage] = useState(1);
   const [openModal, setOpenModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+
 
   // DELETE USER
   const handleDelete = async (id) => {
@@ -20,20 +23,25 @@ function UserTable({ users, reloadUsers }) {
 
     try {
 
-      await deleteUser(id);
+      await userService.remove(id);
+
+      toast.success("Xoá nhân viên thành công");
 
       reloadUsers();
 
     } catch (err) {
 
+      toast.error("Xoá nhân viên thất bại");
       console.log("Delete error:", err);
 
     }
 
   };
 
+
+
   // SEARCH
-  const filteredUsers = users.filter((user) =>
+  const filteredUsers = (users || []).filter((user) =>
     user.name?.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -138,12 +146,15 @@ function UserTable({ users, reloadUsers }) {
                 {/* EDIT */}
 
                 <button
+                  onClick={() => {
+                    setEditingUser(user);
+                    setOpenModal(true);
+                  }}
                   className="flex items-center gap-1 text-blue-600 hover:text-blue-800"
                 >
                   <FaEdit />
                   Sửa
                 </button>
-
                 {/* DELETE */}
 
                 <button
@@ -194,9 +205,14 @@ function UserTable({ users, reloadUsers }) {
 
       <UserModal
         isOpen={openModal}
-        onClose={() => setOpenModal(false)}
+        onClose={() => {
+          setOpenModal(false);
+          setEditingUser(null);
+        }}
         reloadUsers={reloadUsers}
+        user={editingUser}
       />
+
 
     </div>
 
