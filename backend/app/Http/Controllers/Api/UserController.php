@@ -2,24 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\User;
 
-class UserController extends Controller
+class UserController extends BaseController
 {
-    // GET/users
-    public function index(){
-        $users = User::select('id','name','email','phone')->get();
-        return response()->json($users,200,[],JSON_UNESCAPED_UNICODE);
-    }
+    public function __construct()
+    {
+        $this->model = User::class;
 
-    // GET/users/1
-    public function show($id){
-        $user=User::select('id','name','email','phone')->findOrFail($id);
-        return response()->json($user);
-    }
+        // chỉ cho phép API trả các cột này
+        $this->select = ['id','name','email','phone'];
 
-    //Dat join user
-    // ng tiep theo viet o day
+    }
 }
