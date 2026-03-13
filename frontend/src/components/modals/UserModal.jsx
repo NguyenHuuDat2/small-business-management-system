@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import userService from "../../services/userService";
+import toast from "react-hot-toast";
 
 function UserModal({ isOpen, onClose, reloadUsers, user }) {
 
@@ -7,7 +8,7 @@ function UserModal({ isOpen, onClose, reloadUsers, user }) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
-  // Khi chọn user để sửa → đổ dữ liệu vào form
+
   useEffect(() => {
     if (user) {
       setName(user.name || "");
@@ -35,7 +36,7 @@ function UserModal({ isOpen, onClose, reloadUsers, user }) {
           phone
         });
 
-        alert("Cập nhật nhân viên thành công");
+        toast.success("Cập nhật nhân viên thành công");
 
       } else {
         // CREATE
@@ -45,7 +46,7 @@ function UserModal({ isOpen, onClose, reloadUsers, user }) {
           phone
         });
 
-        alert("Thêm nhân viên thành công");
+        toast.success("Thêm nhân viên thành công");
       }
 
       reloadUsers();
@@ -53,7 +54,7 @@ function UserModal({ isOpen, onClose, reloadUsers, user }) {
 
     } catch (err) {
 
-      alert("Có lỗi xảy ra");
+      toast.error("Có lỗi xảy ra");
       console.log(err);
 
     }
