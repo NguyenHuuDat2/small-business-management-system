@@ -33,7 +33,7 @@ const handleDelete = async (id) => {
 };
 
   // SEARCH
-  const filteredUsers = users.filter((user) =>
+  const filteredUsers = (users || []).filter((user) =>
     user.name?.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -143,7 +143,6 @@ const handleDelete = async (id) => {
                   <FaEdit />
                   Sửa
                 </button>
-
                 {/* DELETE */}
 
                 <button
