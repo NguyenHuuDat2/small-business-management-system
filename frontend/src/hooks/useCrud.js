@@ -9,13 +9,15 @@ export default function useCrud(service) {
 
   const fetchData = async (retry = 0) => {
 
-    try {
+    const startTime = Date.now(); // thời gian bắt đầu loading
 
-      setError(null);
+    try {
 
       if (retry === 0) {
         setLoading(true);
       }
+
+      setError(null);
 
       const res = await service.getAll();
 
@@ -40,13 +42,21 @@ export default function useCrud(service) {
 
     } finally {
 
-      setLoading(false);
+      // đảm bảo loading tối thiểu 600ms
+      const elapsed = Date.now() - startTime;
+      const minTime = 600;
+
+      if (elapsed < minTime) {
+        setTimeout(() => setLoading(false), minTime - elapsed);
+      } else {
+        setLoading(false);
+      }
 
     }
 
   };
 
-  
+
   const createItem = async (item) => {
 
     try {
