@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import UserModal from "../modals/UserModal";
 import userService from "../../services/userService";
@@ -13,6 +13,9 @@ function UserTable({ users, reloadUsers }) {
   const [openModal, setOpenModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
+    useEffect(() => {
+    setPage(1);
+  }, [users]);
 
   // DELETE USER
   const handleDelete = async (id) => {
