@@ -9,7 +9,7 @@ export default function useCrud(service) {
 
   const fetchData = async (retry = 0) => {
 
-    const startTime = Date.now(); // thời gian bắt đầu loading
+    const startTime = Date.now();
 
     try {
 
@@ -23,6 +23,15 @@ export default function useCrud(service) {
 
       const result = res?.data?.data || res?.data || [];
 
+      // tính thời gian loading
+      const elapsed = Date.now() - startTime;
+      const minTime = 600;
+
+      if (elapsed < minTime) {
+        await new Promise(resolve => setTimeout(resolve, minTime - elapsed));
+      }
+
+      // set data sau khi delay
       setData(result);
 
     } catch (err) {
@@ -42,20 +51,11 @@ export default function useCrud(service) {
 
     } finally {
 
-      // đảm bảo loading tối thiểu 600ms
-      const elapsed = Date.now() - startTime;
-      const minTime = 600;
-
-      if (elapsed < minTime) {
-        setTimeout(() => setLoading(false), minTime - elapsed);
-      } else {
-        setLoading(false);
-      }
+      setLoading(false);
 
     }
 
   };
-
 
   const createItem = async (item) => {
 
