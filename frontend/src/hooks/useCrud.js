@@ -7,7 +7,7 @@ export default function useCrud(service) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchData = async () => {
+  const fetchData = async (retry = 0) => {
 
     try {
 
@@ -16,13 +16,23 @@ export default function useCrud(service) {
 
       const res = await service.getAll();
 
-      console.log("API RESPONSE:", res?.data);
+      console.log("API RESPONSE:", res);
 
-      setData(res?.data?.data || []);
+      // hỗ trợ nhiều kiểu response
+      const result = res?.data?.data || res?.data || [];
+
+      setData(result);
 
     } catch (err) {
 
       console.log("Fetch error:", err);
+
+      // retry nếu server Render chưa wake up
+      if (retry < 2) {
+        console.log("Retry API...");
+        setTimeout(() => fetchData(retry + 1), 3000);
+        return;
+      }
 
       setError(err);
       setData([]);
