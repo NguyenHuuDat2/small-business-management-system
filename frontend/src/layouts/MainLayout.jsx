@@ -8,7 +8,7 @@ function MainLayout({ children }) {
 
   return (
 
-    <div className="flex h-screen">
+    <div className="flex min-h-screen">
 
       <Sidebar collapsed={collapsed} />
 
