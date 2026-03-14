@@ -5,8 +5,18 @@ export default function useCrud(service) {
   const [data, setData] = useState([]);
 
   const fetchData = async () => {
-    const res = await service.getAll();
-    setData(res.data.data);
+    try {
+
+      const res = await service.getAll();
+
+      setData(res?.data?.data || []);
+
+    } catch (error) {
+
+      console.log("Fetch error:", error);
+      setData([]);
+
+    }
   };
 
   const createItem = async (item) => {
@@ -35,4 +45,5 @@ export default function useCrud(service) {
     updateItem,
     deleteItem
   };
+
 }
