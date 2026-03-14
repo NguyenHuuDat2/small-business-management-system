@@ -4,7 +4,7 @@ import UserModal from "../modals/UserModal";
 import userService from "../../services/userService";
 import toast from "react-hot-toast";
 
-function UserTable({ users, reloadUsers }) {
+function UserTable({ users = [], reloadUsers }) {
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("asc");
@@ -13,7 +13,7 @@ function UserTable({ users, reloadUsers }) {
   const [openModal, setOpenModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
 
-    useEffect(() => {
+  useEffect(() => {
     setPage(1);
   }, [users]);
 
@@ -21,7 +21,6 @@ function UserTable({ users, reloadUsers }) {
   const handleDelete = async (id) => {
 
     const confirmDelete = window.confirm("Bạn chắc chắn muốn xoá nhân viên này?");
-
     if (!confirmDelete) return;
 
     try {
@@ -41,10 +40,8 @@ function UserTable({ users, reloadUsers }) {
 
   };
 
-
-
   // SEARCH
-  const filteredUsers = (users || []).filter((user) =>
+  const filteredUsers = users.filter((user) =>
     user.name?.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -55,7 +52,7 @@ function UserTable({ users, reloadUsers }) {
 
   // PAGINATION
   const start = (page - 1) * limit;
-  const paginatedUsers = sortedUsers.slice(start, start + Number(limit));
+  const paginatedUsers = sortedUsers.slice(start, start + limit);
   const totalPages = Math.ceil(sortedUsers.length / limit);
 
   return (
@@ -88,9 +85,9 @@ function UserTable({ users, reloadUsers }) {
               setPage(1);
             }}
           >
-            <option value="5">5 dòng</option>
-            <option value="10">10 dòng</option>
-            <option value="20">20 dòng</option>
+            <option value={5}>5 dòng</option>
+            <option value={10}>10 dòng</option>
+            <option value={20}>20 dòng</option>
           </select>
 
           {/* CREATE BUTTON */}
@@ -113,7 +110,6 @@ function UserTable({ users, reloadUsers }) {
         <thead className="bg-gray-100 text-gray-700">
 
           <tr>
-
             <th
               className="p-3 cursor-pointer"
               onClick={() => setSort(sort === "asc" ? "desc" : "asc")}
@@ -125,12 +121,23 @@ function UserTable({ users, reloadUsers }) {
             <th className="p-3 text-left">Email</th>
             <th className="p-3 text-left">SĐT</th>
             <th className="p-3 text-center">Hành động</th>
-
           </tr>
 
         </thead>
 
         <tbody>
+
+          {/* TRƯỜNG HỢP KHÔNG CÓ DATA */}
+
+          {paginatedUsers.length === 0 && (
+
+            <tr>
+              <td colSpan="5" className="text-center p-4 text-gray-500">
+                Không có dữ liệu
+              </td>
+            </tr>
+
+          )}
 
           {paginatedUsers.map((user) => (
 
@@ -147,7 +154,6 @@ function UserTable({ users, reloadUsers }) {
               <td className="p-3 flex justify-center gap-3">
 
                 {/* EDIT */}
-
                 <button
                   onClick={() => {
                     setEditingUser(user);
@@ -158,8 +164,8 @@ function UserTable({ users, reloadUsers }) {
                   <FaEdit />
                   Sửa
                 </button>
-                {/* DELETE */}
 
+                {/* DELETE */}
                 <button
                   onClick={() => handleDelete(user.id)}
                   className="flex items-center gap-1 text-red-600 hover:text-red-800"
@@ -215,7 +221,6 @@ function UserTable({ users, reloadUsers }) {
         reloadUsers={reloadUsers}
         user={editingUser}
       />
-
 
     </div>
 
