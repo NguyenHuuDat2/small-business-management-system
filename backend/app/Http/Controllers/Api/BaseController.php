@@ -4,76 +4,105 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 
 class BaseController extends Controller
 {
     protected $model;
-    protected $select = ['*']; 
+    protected $select = ['*'];
+    protected $perPage = 10;
 
-    // GET /api/resource
+    // GET list
     public function index()
     {
-        $data = $this->model::select($this->select)->get();
+        try {
+            $data = $this->model::select($this->select)
+                ->paginate($this->perPage);
 
-        return response()->json([
-            "success" => true,
-            "data" => $data
-        ],200,[],JSON_UNESCAPED_UNICODE);
+            return response()->json([
+                "success" => true,
+                "data" => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                "success" => false,
+                "message" => $e->getMessage()
+            ], 500);
+        }
     }
 
-    // GET /api/resource/{id}
+    // GET detail
     public function show($id)
     {
-        $data = $this->model::select($this->select)->findOrFail($id);
+        try {
+            $data = $this->model::select($this->select)->findOrFail($id);
 
-        return response()->json([
-            "success" => true,
-            "data" => $data
-        ],200,[],JSON_UNESCAPED_UNICODE);
+            return response()->json([
+                "success" => true,
+                "data" => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                "success" => false,
+                "message" => "Không tìm thấy dữ liệu"
+            ], 404);
+        }
     }
 
-    // POST
+    // CREATE 
     public function store(Request $request)
     {
-        $data = $request->all();
+        try {
+            $record = $this->model::create($request->all());
 
-        //bảng users tự tạo password
-        if ($this->model === \App\Models\User::class) {
-            $data['password'] = Hash::make('123456');
+            return response()->json([
+                "success" => true,
+                "message" => "Tạo thành công",
+                "data" => $record
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                "success" => false,
+                "message" => $e->getMessage()
+            ], 500);
         }
-
-        $record = $this->model::create($data);
-
-        return response()->json([
-            "success" => true,
-            "message" => "Tạo thành công",
-            "data" => $record
-        ],201,[],JSON_UNESCAPED_UNICODE);
     }
 
-    // PUT
-    public function update(Request $request,$id)
+    // UPDATE
+    public function update(Request $request, $id)
     {
-        $data = $this->model::findOrFail($id);
-        $data->update($request->all());
+        try {
+            $record = $this->model::findOrFail($id);
+            $record->update($request->all());
 
-        return response()->json([
-            "success" => true,
-            "message" => "Cập nhật thành công",
-            "data" => $data
-        ],200,[],JSON_UNESCAPED_UNICODE);
+            return response()->json([
+                "success" => true,
+                "message" => "Cập nhật thành công",
+                "data" => $record
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                "success" => false,
+                "message" => "Cập nhật thất bại"
+            ], 500);
+        }
     }
 
     // DELETE
     public function destroy($id)
     {
-        $data = $this->model::findOrFail($id);
-        $data->delete();
+        try {
+            $record = $this->model::findOrFail($id);
+            $record->delete();
 
-        return response()->json([
-            "success" => true,
-            "message" => "Xóa thành công"
-        ],200,[],JSON_UNESCAPED_UNICODE);
+            return response()->json([
+                "success" => true,
+                "message" => "Xóa thành công"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                "success" => false,
+                "message" => "Xóa thất bại"
+            ], 500);
+        }
     }
 }

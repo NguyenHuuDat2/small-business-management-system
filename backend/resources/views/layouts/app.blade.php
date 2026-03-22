@@ -8,7 +8,7 @@
 <title>{{ $title ?? 'ERP Admin' }}</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 @livewireStyles
 
 
@@ -167,6 +167,60 @@ class="p-2 rounded hover:bg-gray-100">
 
 
 @livewireScripts
+<div
+    x-data="toastSystem()"
+    x-on:notify.window="add($event.detail)"
+    class="fixed top-5 right-5 space-y-3 z-50"
+>
 
+    <template x-for="toast in toasts" :key="toast.id">
+        <div
+            x-show="toast.show"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:leave="transition ease-in duration-200"
+            :class="{
+                'bg-green-500': toast.type === 'success',
+                'bg-red-500': toast.type === 'error',
+                'bg-yellow-500': toast.type === 'warning',
+                'bg-blue-500': toast.type === 'info'
+            }"
+            class="text-white px-5 py-3 rounded-lg shadow-lg min-w-[250px]"
+        >
+            <div class="flex justify-between items-center gap-3">
+                <span x-text="toast.message"></span>
+
+                <button @click="removeById(toast.id)">✖</button>
+            </div>
+        </div>
+    </template>
+
+</div>
+
+<script>
+function toastSystem() {
+    return {
+        toasts: [],
+
+        add(data) {
+            let toast = {
+                message: data.message || 'Thông báo',
+                type: data.type || 'info',
+                show: true
+            };
+
+            this.toasts.push(toast);
+
+            setTimeout(() => {
+                toast.show = false;
+            }, 3000);
+        },
+
+        remove(index) {
+            this.toasts.splice(index, 1);
+        }
+    }
+}
+</script>
 </body>
+
 </html>
