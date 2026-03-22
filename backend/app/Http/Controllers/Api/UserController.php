@@ -93,7 +93,7 @@ class UserController extends BaseController
             ]);
 
             try {
-                Mail::to($user->email)->send(new SendAccountMail($user, $password));
+                Mail::to($user->email)->send(new SendAccountMail($user, $password,$user->role->role_code));
                 $mailMessage = 'Tạo user thành công và đã gửi email';
             } catch (\Throwable $mailError) {
                 report($mailError);
