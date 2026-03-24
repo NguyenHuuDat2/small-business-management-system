@@ -6,7 +6,9 @@ const axiosClient = axios.create({
     "https://small-business-management-system.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
+    Accept: "application/json",
   },
+  timeout: 10000,
 });
 
 axiosClient.interceptors.request.use(
