@@ -20,10 +20,28 @@ class UserController extends BaseController
     private function reactUser(User $user): array
     {
         return [
-            'id'    => $user->id,
-            'name'  => $user->employee?->name ?? $user->name,
+            'id' => $user->id,
+            'name' => $user->employee?->name ?? $user->name,
             'email' => $user->email,
             'phone' => $user->employee?->phone ?? $user->phone,
+            'status' => (bool) $user->status,
+            'must_change_password' => (bool) $user->must_change_password,
+
+            'role_id' => $user->role_id,
+            'role' => $user->role ? [
+                'id' => $user->role->id,
+                'role_code' => $user->role->role_code,
+                'name' => $user->role->name,
+                'description' => $user->role->description,
+            ] : null,
+
+            'employee_id' => $user->employee_id,
+            'employee' => $user->employee ? [
+                'id' => $user->employee->id,
+                'name' => $user->employee->name,
+                'phone' => $user->employee->phone,
+                'status' => (bool) $user->employee->status,
+            ] : null,
         ];
     }
 
