@@ -6,50 +6,113 @@ return [
         'route' => 'admin.dashboard',
         'icon'  => 'home',
     ],
+
     [
-        'label' => 'Tài khoản',
-        'route' => 'admin.users',
-        'icon'  => 'users',
-    ],
-    [
-        'label' => 'Nhân sự',
-        'icon'  => 'briefcase',
+        'label' => 'Hệ thống',
+        'icon'  => 'settings',
         'children' => [
             [
-                'label' => 'Danh sách nhân viên',
-                'route' => 'admin.employees.index',
+                'label' => 'Tài khoản',
+                'route' => 'admin.users',
             ],
             [
-                'label' => 'Phòng ban',
-                'route' => 'admin.departments.index',
+                'label' => 'Vai trò',
+                'route' => 'admin.roles',
+            ],
+            [
+                'label' => 'Menu',
+                'route' => 'admin.menus',
+            ],
+            [
+                'label' => 'Phân quyền',
+                'route' => 'admin.role-permissions',
             ],
         ],
     ],
+
+    [
+        'label' => 'Nhân sự',
+        'icon'  => 'users',
+        'children' => [
+            [
+                'label' => 'Nhân viên',
+                'route' => 'admin.employees',
+            ],
+            [
+                'label' => 'Phòng ban',
+                'route' => 'admin.departments',
+            ],
+        ],
+    ],
+
     [
         'label' => 'Bán hàng',
         'icon'  => 'shopping-cart',
         'children' => [
             [
-                'label' => 'Đơn hàng',
-                'route' => 'admin.orders.index',
+                'label' => 'Khách hàng',
+                'route' => 'admin.customers',
             ],
             [
-                'label' => 'Khách hàng',
-                'route' => 'admin.customers.index',
+                'label' => 'Đơn bán hàng',
+                'route' => 'admin.sales-orders',
             ],
         ],
     ],
+
     [
         'label' => 'Kho',
-        'icon'  => 'package',
+        'icon'  => 'cube',
         'children' => [
             [
-                'label' => 'Sản phẩm',
-                'route' => 'admin.products.index',
+                'label' => 'Phiếu nhập',
+                'route' => 'admin.goods-receipts',
             ],
             [
-                'label' => 'Nhập kho',
-                'route' => 'admin.stock-ins.index',
+                'label' => 'Giao hàng',
+                'route' => 'admin.deliveries',
+            ],
+            [
+                'label' => 'Tồn kho',
+                'route' => 'admin.inventory',
+            ],
+        ],
+    ],
+
+    [
+        'label' => 'Kế toán',
+        'icon'  => 'credit-card',
+        'children' => [
+            [
+                'label' => 'Hóa đơn',
+                'route' => 'admin.invoices',
+            ],
+            [
+                'label' => 'Thanh toán',
+                'route' => 'admin.payments',
+            ],
+            [
+                'label' => 'Công nợ',
+                'route' => 'admin.receivables',
+            ],
+        ],
+    ],
+
+    [
+        'label' => 'Tài sản',
+        'icon'  => 'archive-box',
+        'children' => [
+            [
+                'label' => 'Tồn tài sản',
+                'route' => 'admin.asset-inventory',
+            ],
+            [
+                'label' => 'Tài sản khách giữ',
+                'route' => 'admin.customer-assets',
+            ],
+            [
+                'label' => 'Giao dịch tài sản',
+                'route' => 'admin.asset-transactions',
             ],
         ],
     ],

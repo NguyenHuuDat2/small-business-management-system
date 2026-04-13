@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('path')->nullable();
+            $table->string('page_code')->nullable();
             $table->string('icon')->nullable();
             $table->foreignId('parent_id')->nullable()->constrained('menus');
             $table->integer('order_index')->default(0);

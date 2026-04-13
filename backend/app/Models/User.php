@@ -58,4 +58,16 @@ class User extends Authenticatable
     {
         return optional($this->role)->role_code === 'ADMIN';
     }
+
+    public function hasPermission(string $permissionKey): bool
+    {
+        if ($this->role?->role_code === 'ADMIN') {
+            return true;
+        }
+
+        return $this->role?->menus()
+            ->where('status', true)
+            ->where('permission_key', $permissionKey)
+            ->exists() ?? false;
+    }
 }

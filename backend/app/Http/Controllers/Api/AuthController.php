@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
+   public function login(Request $request)
     {
         $data = $request->validate([
             'email' => ['required', 'email'],
@@ -18,7 +18,7 @@ class AuthController extends Controller
             'device_name' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $user = User::with(['role', 'employee.department'])
+        $user = User::with(['role.menus', 'employee.department'])
             ->where('email', $data['email'])
             ->first();
 
@@ -29,18 +29,17 @@ class AuthController extends Controller
             ], 401);
         }
 
+        if ($user->role?->role_code === 'ADMIN') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài khoản quản trị vui lòng đăng nhập ở trang admin.',
+            ], 403);
+        }
+
         if (! $user->status) {
             return response()->json([
                 'success' => false,
                 'message' => 'Tài khoản đã bị khóa',
-            ], 403);
-        }
-
-        // Nếu là tài khoản nhân viên thì check luôn trạng thái employee
-        if ($user->employee_id && (! $user->employee || ! $user->employee->status)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Nhân viên này đang bị khóa hoặc không hợp lệ',
             ], 403);
         }
 
@@ -49,22 +48,29 @@ class AuthController extends Controller
 
         $token = $user->createToken($tokenName)->plainTextToken;
 
+        $navigation = $this->transformNavigation($user);
+
         return response()->json([
             'success' => true,
             'message' => 'Đăng nhập thành công',
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => $this->transformUser($user),
+            'sidebar' => $navigation['sidebar'],
+            'permissions' => $navigation['permissions'],
         ]);
     }
 
     public function me(Request $request)
     {
-        $user = $request->user()->loadMissing(['role', 'employee.department']);
+        $user = $request->user()->loadMissing(['role.menus', 'employee.department']);
+        $navigation = $this->transformNavigation($user);
 
         return response()->json([
             'success' => true,
             'user' => $this->transformUser($user),
+            'sidebar' => $navigation['sidebar'],
+            'permissions' => $navigation['permissions'],
         ]);
     }
 
@@ -106,7 +112,6 @@ class AuthController extends Controller
 
     public function forgotPassword(Request $request)
     {
-        // Giai đoạn này nên tắt hẳn hoặc chỉ dùng nội bộ/dev
         return response()->json([
             'success' => false,
             'message' => 'Chức năng quên mật khẩu tạm thời chưa mở.',
@@ -142,6 +147,56 @@ class AuthController extends Controller
                     'name' => $user->employee->department->name,
                 ] : null,
             ] : null,
+        ];
+    }
+
+    private function getAllowedMenus(User $user)
+    {
+        return $user->role
+            ? $user->role->menus()
+                ->where('status', true)
+                ->orderBy('order_index')
+                ->get()
+            : collect();
+    }
+
+    private function buildMenuTree($menus, $parentId = null): array
+    {
+        return $menus
+            ->where('parent_id', $parentId)
+            ->sortBy('order_index')
+            ->map(function ($menu) use ($menus) {
+                return [
+                    'id' => $menu->id,
+                    'name' => $menu->name,
+                    'path' => $menu->path,
+                    'page_code' => $menu->page_code,
+                    'icon' => $menu->icon,
+                    'permission_key' => $menu->permission_key,
+                    'menu_type' => $menu->menu_type,
+                    'children' => $this->buildMenuTree($menus, $menu->id),
+                ];
+            })
+            ->values()
+            ->toArray();
+    }
+
+    private function transformNavigation(User $user): array
+    {
+        $menus = $this->getAllowedMenus($user);
+
+        $sidebarMenus = $menus->where('menu_type', 'sidebar')->values();
+
+        $permissions = $menus
+            ->pluck('permission_key')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        return [
+            'sidebar' => $this->buildMenuTree($sidebarMenus),
+            'permissions' => $permissions,
         ];
     }
 }
