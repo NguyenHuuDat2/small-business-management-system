@@ -16,6 +16,11 @@ class RoleSeeder extends Seeder
                 'description' => 'Quản trị hệ thống'
             ],
             [
+                'role_code' => 'HR',
+                'name' => 'Nhân sự',
+                'description' => 'Quản lý nghiệp vụ nhân sự'
+            ],
+            [
                 'role_code' => 'SALES',
                 'name' => 'Nhân viên bán hàng',
                 'description' => 'Quản lý đơn hàng'

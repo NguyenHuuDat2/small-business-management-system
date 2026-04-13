@@ -15,17 +15,19 @@ class BaseController extends Controller
     public function index()
     {
         try {
+            $perPage = request()->get('per_page', $this->perPage);
+            
             $data = $this->model::select($this->select)
-                ->paginate($this->perPage);
-
+                ->latest()
+                ->paginate($perPage);
             return response()->json([
                 "success" => true,
                 "data" => $data
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 "success" => false,
-                "message" => $e->getMessage()
+                "message" => "Lỗi lấy danh sách: " . $e->getMessage()
             ], 500);
         }
     }
@@ -40,10 +42,10 @@ class BaseController extends Controller
                 "success" => true,
                 "data" => $data
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 "success" => false,
-                "message" => "Không tìm thấy dữ liệu"
+                "message" => "Không tìm thấy dữ liệu id: " . $id
             ], 404);
         }
     }
@@ -59,10 +61,10 @@ class BaseController extends Controller
                 "message" => "Tạo thành công",
                 "data" => $record
             ], 201);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 "success" => false,
-                "message" => $e->getMessage()
+                "message" => "Lỗi tạo mới: " . $e->getMessage()
             ], 500);
         }
     }
@@ -79,10 +81,10 @@ class BaseController extends Controller
                 "message" => "Cập nhật thành công",
                 "data" => $record
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 "success" => false,
-                "message" => "Cập nhật thất bại"
+                "message" => "Cập nhật thất bại: " . $e->getMessage()
             ], 500);
         }
     }
@@ -98,7 +100,7 @@ class BaseController extends Controller
                 "success" => true,
                 "message" => "Xóa thành công"
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 "success" => false,
                 "message" => "Xóa thất bại"

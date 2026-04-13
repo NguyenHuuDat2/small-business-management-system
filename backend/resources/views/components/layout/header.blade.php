@@ -3,11 +3,30 @@
 
     $pageTitle = match (true) {
         request()->routeIs('admin.dashboard') => 'Dashboard',
+
         request()->routeIs('admin.users*') => 'Tài khoản',
+        request()->routeIs('admin.roles*') => 'Vai trò',
+        request()->routeIs('admin.menus*') => 'Menu',
+        request()->routeIs('admin.role-permissions*') => 'Phân quyền',
+
         request()->routeIs('admin.employees*') => 'Nhân sự',
         request()->routeIs('admin.departments*') => 'Phòng ban',
-        request()->routeIs('admin.products*') => 'Sản phẩm',
-        request()->routeIs('admin.orders*') => 'Đơn hàng',
+
+        request()->routeIs('admin.customers*') => 'Khách hàng',
+        request()->routeIs('admin.sales-orders*') => 'Đơn bán hàng',
+
+        request()->routeIs('admin.goods-receipts*') => 'Phiếu nhập',
+        request()->routeIs('admin.deliveries*') => 'Giao hàng',
+        request()->routeIs('admin.inventory*') => 'Tồn kho',
+
+        request()->routeIs('admin.invoices*') => 'Hóa đơn',
+        request()->routeIs('admin.payments*') => 'Thanh toán',
+        request()->routeIs('admin.receivables*') => 'Công nợ',
+
+        request()->routeIs('admin.asset-inventory*') => 'Tồn tài sản',
+        request()->routeIs('admin.customer-assets*') => 'Tài sản khách giữ',
+        request()->routeIs('admin.asset-transactions*') => 'Giao dịch tài sản',
+
         default => 'ERP Admin',
     };
 
@@ -21,18 +40,54 @@
     if (request()->routeIs('admin.users*')) {
         $searchScope = 'users';
         $searchPlaceholder = 'Tìm tài khoản theo tên, email, SĐT...';
+    } elseif (request()->routeIs('admin.roles*')) {
+        $searchScope = 'roles';
+        $searchPlaceholder = 'Tìm vai trò theo mã, tên...';
+    } elseif (request()->routeIs('admin.menus*')) {
+        $searchScope = 'menus';
+        $searchPlaceholder = 'Tìm menu theo tên, path, permission key...';
+    } elseif (request()->routeIs('admin.role-permissions*')) {
+        $searchScope = 'role-permissions';
+        $searchPlaceholder = 'Tìm quyền theo vai trò hoặc chức năng...';
     } elseif (request()->routeIs('admin.employees*')) {
         $searchScope = 'employees';
         $searchPlaceholder = 'Tìm nhân sự theo tên, mã NV, SĐT...';
     } elseif (request()->routeIs('admin.departments*')) {
         $searchScope = 'departments';
         $searchPlaceholder = 'Tìm phòng ban...';
-    } elseif (request()->routeIs('admin.products*')) {
-        $searchScope = 'products';
-        $searchPlaceholder = 'Tìm sản phẩm theo mã, tên...';
-    } elseif (request()->routeIs('admin.orders*')) {
-        $searchScope = 'orders';
-        $searchPlaceholder = 'Tìm đơn hàng theo mã đơn, khách hàng...';
+    } elseif (request()->routeIs('admin.customers*')) {
+        $searchScope = 'customers';
+        $searchPlaceholder = 'Tìm khách hàng...';
+    } elseif (request()->routeIs('admin.sales-orders*')) {
+        $searchScope = 'sales-orders';
+        $searchPlaceholder = 'Tìm đơn bán hàng theo mã đơn, khách hàng...';
+    } elseif (request()->routeIs('admin.goods-receipts*')) {
+        $searchScope = 'goods-receipts';
+        $searchPlaceholder = 'Tìm phiếu nhập...';
+    } elseif (request()->routeIs('admin.deliveries*')) {
+        $searchScope = 'deliveries';
+        $searchPlaceholder = 'Tìm lệnh giao hàng...';
+    } elseif (request()->routeIs('admin.inventory*')) {
+        $searchScope = 'inventory';
+        $searchPlaceholder = 'Tìm tồn kho...';
+    } elseif (request()->routeIs('admin.invoices*')) {
+        $searchScope = 'invoices';
+        $searchPlaceholder = 'Tìm hóa đơn...';
+    } elseif (request()->routeIs('admin.payments*')) {
+        $searchScope = 'payments';
+        $searchPlaceholder = 'Tìm thanh toán...';
+    } elseif (request()->routeIs('admin.receivables*')) {
+        $searchScope = 'receivables';
+        $searchPlaceholder = 'Tìm công nợ...';
+    } elseif (request()->routeIs('admin.asset-inventory*')) {
+        $searchScope = 'asset-inventory';
+        $searchPlaceholder = 'Tìm tồn tài sản...';
+    } elseif (request()->routeIs('admin.customer-assets*')) {
+        $searchScope = 'customer-assets';
+        $searchPlaceholder = 'Tìm tài sản khách giữ...';
+    } elseif (request()->routeIs('admin.asset-transactions*')) {
+        $searchScope = 'asset-transactions';
+        $searchPlaceholder = 'Tìm giao dịch tài sản...';
     } elseif (request()->routeIs('admin.dashboard')) {
         $searchScope = 'dashboard';
         $searchPlaceholder = 'Tìm nhanh trong dashboard...';
