@@ -11,6 +11,12 @@ use App\Livewire\Admin\RolePermissions\Index as RolePermissionsIndex;
 use App\Livewire\Admin\Employees\Index as EmployeesIndex;
 use App\Livewire\Admin\Departments\Index as DepartmentsIndex;
 
+Route::get('/health', function () {
+    return response()->json([
+        'status' => 'ok',
+    ]);
+});
+
 Route::get('/', function () {
     return Auth::check()
         ? redirect()->route('admin.dashboard')
@@ -18,7 +24,6 @@ Route::get('/', function () {
 });
 
 Route::prefix('admin')->group(function () {
-
     Route::middleware('guest')->group(function () {
         Route::get('/login', [AdminAuthController::class, 'showLogin'])
             ->name('admin.login');
@@ -40,9 +45,6 @@ Route::prefix('admin')->group(function () {
         Route::get('/menus', MenusIndex::class)
             ->name('admin.menus');
 
-        Route::post('/logout', [AdminAuthController::class, 'logout'])
-            ->name('admin.logout');
-            
         Route::get('/role-permissions', RolePermissionsIndex::class)
             ->name('admin.role-permissions');
 
@@ -51,5 +53,8 @@ Route::prefix('admin')->group(function () {
 
         Route::get('/departments', DepartmentsIndex::class)
             ->name('admin.departments');
+
+        Route::post('/logout', [AdminAuthController::class, 'logout'])
+            ->name('admin.logout');
     });
 });
