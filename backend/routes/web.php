@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Users\Index as UsersIndex;
@@ -18,9 +17,7 @@ Route::get('/health', function () {
 });
 
 Route::get('/', function () {
-    return Auth::check()
-        ? redirect()->route('admin.dashboard')
-        : redirect()->route('admin.login');
+    return redirect()->route('admin.login');
 });
 
 Route::prefix('admin')->group(function () {
@@ -33,28 +30,13 @@ Route::prefix('admin')->group(function () {
     });
 
     Route::middleware(['auth', 'admin'])->group(function () {
-        Route::get('/dashboard', Dashboard::class)
-            ->name('admin.dashboard');
-
-        Route::get('/users', UsersIndex::class)
-            ->name('admin.users');
-
-        Route::get('/roles', RolesIndex::class)
-            ->name('admin.roles');
-
-        Route::get('/menus', MenusIndex::class)
-            ->name('admin.menus');
-
-        Route::get('/role-permissions', RolePermissionsIndex::class)
-            ->name('admin.role-permissions');
-
-        Route::get('/employees', EmployeesIndex::class)
-            ->name('admin.employees');
-
-        Route::get('/departments', DepartmentsIndex::class)
-            ->name('admin.departments');
-
-        Route::post('/logout', [AdminAuthController::class, 'logout'])
-            ->name('admin.logout');
+        Route::get('/dashboard', Dashboard::class)->name('admin.dashboard');
+        Route::get('/users', UsersIndex::class)->name('admin.users');
+        Route::get('/roles', RolesIndex::class)->name('admin.roles');
+        Route::get('/menus', MenusIndex::class)->name('admin.menus');
+        Route::get('/role-permissions', RolePermissionsIndex::class)->name('admin.role-permissions');
+        Route::get('/employees', EmployeesIndex::class)->name('admin.employees');
+        Route::get('/departments', DepartmentsIndex::class)->name('admin.departments');
+        Route::post('/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
     });
 });
