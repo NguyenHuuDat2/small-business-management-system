@@ -32,12 +32,15 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-      localStorage.removeItem(AUTH_USER_KEY);
-      localStorage.removeItem(AUTH_SIDEBAR_KEY);
-      localStorage.removeItem(AUTH_PERMISSIONS_KEY);
-    }
+    console.error(
+      "API error:",
+      error.config?.url,
+      error.response?.status,
+      error.response?.data
+    );
+
+    // Tạm thời chưa auto clear auth ở đây
+    // để tránh app tự mất trạng thái đăng nhập khi có 1 request 401
 
     return Promise.reject(error);
   }
