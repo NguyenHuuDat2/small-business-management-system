@@ -17,11 +17,14 @@ import {
 import invoiceService from "../../services/invoiceService";
 import { useAuth } from "../../../../context/AuthContext";
 
+// 1. Import Modal chi tiết
+import InvoiceDetailModal from "./components/InvoiceDetailModal";
+
 /**
  * Helper: Định dạng tiền tệ từ String/Number sang VND
  */
 const formatCurrency = (value) => {
-  const number = Number(value || 0); // Ép kiểu vì API trả về chuỗi "1500000.00"
+  const number = Number(value || 0);
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
@@ -53,11 +56,17 @@ function InvoiceListPage() {
   const canCreate = hasPermission("accounting.invoices.create");
   const canUpdate = hasPermission("accounting.invoices.update");
 
+  // State dữ liệu và UI
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchInput, setSearchInput] = useState("");
 
+  // State quản lý Modal chi tiết
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // State phân trang và lọc
   const [meta, setMeta] = useState({
     current_page: 1,
     last_page: 1,
@@ -117,6 +126,12 @@ function InvoiceListPage() {
   };
 
   const handleRefresh = () => fetchInvoices(filters, true);
+
+  // Hàm xử lý mở chi tiết
+  const handleOpenDetail = (invoice) => {
+    setSelectedInvoice(invoice);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="space-y-4">
@@ -221,9 +236,15 @@ function InvoiceListPage() {
                     <td className="px-6 py-4"><StatusBadge status={inv.status} /></td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
-                        <button className="rounded-lg p-2 text-slate-400 hover:bg-white hover:text-blue-600 hover:shadow-sm transition-all border border-transparent hover:border-slate-100">
+                        {/* Nút Xem Chi Tiết */}
+                        <button 
+                          onClick={() => handleOpenDetail(inv)}
+                          className="rounded-lg p-2 text-slate-400 hover:bg-white hover:text-blue-600 hover:shadow-sm transition-all border border-transparent hover:border-slate-100"
+                        >
                           <FiEye size={18} />
                         </button>
+                        
+                        {/* Nút Chỉnh Sửa */}
                         {canUpdate && inv.status !== 'Paid' && (
                           <button className="rounded-lg p-2 text-slate-400 hover:bg-white hover:text-teal-600 hover:shadow-sm transition-all border border-transparent hover:border-slate-100">
                             <FiEdit2 size={18} />
@@ -263,6 +284,13 @@ function InvoiceListPage() {
           </div>
         </div>
       </div>
+
+      {/* --- Section 5: Modal chi tiết --- */}
+      <InvoiceDetailModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        invoice={selectedInvoice}
+      />
     </div>
   );
 }
