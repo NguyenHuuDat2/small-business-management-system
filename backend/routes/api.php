@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Accounting\InvoiceController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AuthController;
@@ -35,4 +36,13 @@ Route::prefix('hr')->middleware('auth:sanctum')->group(function () {
     Route::delete('/employees/{employee}', [HrEmployeeController::class, 'destroy']);
 
     Route::get('/department-options', [HrEmployeeController::class, 'departmentOptions']);
+});
+
+//accounting
+Route::prefix('accounting')->group(function () {
+    // Quản lý hóa đơn (Invoice)
+    Route::get('/invoices', [InvoiceController::class, 'index']);          // Danh sách hóa đơn
+    Route::post('/invoices', [InvoiceController::class, 'store']);         // Lập hóa đơn mới
+    Route::get('/invoices/{id}', [InvoiceController::class, 'show']);      // Chi tiết hóa đơn
+    // Bạn có thể thêm các route như update status, thanh toán tại đây
 });
