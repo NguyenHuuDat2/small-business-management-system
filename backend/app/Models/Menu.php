@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Menu extends Model
 {
@@ -18,9 +18,11 @@ class Menu extends Model
         'status',
         'permission_key',
         'menu_type',
+        'module_code',
+        'page_code'
     ];
 
-    protected $casts = [
+protected $casts = [
         'status' => 'boolean',
     ];
 
@@ -39,3 +41,5 @@ class Menu extends Model
         return $this->belongsToMany(Role::class, 'role_permissions', 'menu_id', 'role_id');
     }
 }
+
+

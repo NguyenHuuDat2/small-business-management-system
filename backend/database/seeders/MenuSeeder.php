@@ -9,14 +9,12 @@ class MenuSeeder extends Seeder
 {
     public function run(): void
     {
-        // Workspace chung
-        Menu::updateOrCreate(
+        $dashboard = Menu::updateOrCreate(
             ['permission_key' => 'workspace.view'],
             [
-                'name' => 'Khu vực làm việc',
-                'path' => '/workspace',
-                'page_code' => 'workspace.index',
-                'icon' => 'FiGrid',
+                'name' => 'Dashboard',
+                'path' => '/dashboard',
+                'icon' => 'FiHome',
                 'parent_id' => null,
                 'order_index' => 1,
                 'status' => true,
@@ -24,438 +22,122 @@ class MenuSeeder extends Seeder
             ]
         );
 
-        // =========================
-        // HR
-        // =========================
-        $hrModule = Menu::updateOrCreate(
-            ['permission_key' => 'hr.module'],
-            [
-                'name' => 'Nhân sự',
-                'path' => null,
-                'page_code' => null,
-                'icon' => 'FiUsers',
-                'parent_id' => null,
-                'order_index' => 10,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        $hrDashboard = Menu::updateOrCreate(
-            ['permission_key' => 'hr.dashboard.view'],
-            [
-                'name' => 'Tổng quan nhân sự',
-                'path' => '/hr/dashboard',
-                'page_code' => 'hr.dashboard.index',
-                'icon' => 'FiHome',
-                'parent_id' => $hrModule->id,
-                'order_index' => 11,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        $employees = Menu::updateOrCreate(
-            ['permission_key' => 'hr.employees.view'],
-            [
-                'name' => 'Nhân viên',
-                'path' => '/hr/employees',
-                'page_code' => 'hr.employees.index',
-                'icon' => 'FiUser',
-                'parent_id' => $hrModule->id,
-                'order_index' => 12,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'hr.employees.create'],
-            [
-                'name' => 'Tạo nhân viên',
-                'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $employees->id,
-                'order_index' => 13,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'hr.employees.update'],
-            [
-                'name' => 'Sửa nhân viên',
-                'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $employees->id,
-                'order_index' => 14,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-
-
-        // =========================
-        // SALES
-        // =========================
-        $salesModule = Menu::updateOrCreate(
+        $sales = Menu::updateOrCreate(
             ['permission_key' => 'sales.module'],
             [
                 'name' => 'Bán hàng',
                 'path' => null,
-                'page_code' => null,
                 'icon' => 'FiShoppingCart',
                 'parent_id' => null,
-                'order_index' => 20,
+                'order_index' => 2,
                 'status' => true,
                 'menu_type' => 'sidebar',
             ]
         );
 
-        Menu::updateOrCreate(
-            ['permission_key' => 'sales.dashboard.view'],
-            [
-                'name' => 'Tổng quan bán hàng',
-                'path' => '/sales/dashboard',
-                'page_code' => 'sales.dashboard.index',
-                'icon' => 'FiHome',
-                'parent_id' => $salesModule->id,
-                'order_index' => 21,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        $customers = Menu::updateOrCreate(
-            ['permission_key' => 'sales.customers.view'],
-            [
-                'name' => 'Khách hàng',
-                'path' => '/sales/customers',
-                'page_code' => 'sales.customers.index',
-                'icon' => 'FiUsers',
-                'parent_id' => $salesModule->id,
-                'order_index' => 22,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'sales.customers.create'],
-            [
-                'name' => 'Tạo khách hàng',
-                'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $customers->id,
-                'order_index' => 23,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'sales.customers.update'],
-            [
-                'name' => 'Sửa khách hàng',
-                'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $customers->id,
-                'order_index' => 24,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        $salesOrders = Menu::updateOrCreate(
-            ['permission_key' => 'sales.orders.view'],
-            [
-                'name' => 'Đơn bán hàng',
-                'path' => '/sales/orders',
-                'page_code' => 'sales.orders.index',
-                'icon' => 'FiFileText',
-                'parent_id' => $salesModule->id,
-                'order_index' => 25,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'sales.orders.create'],
-            [
-                'name' => 'Tạo đơn bán hàng',
-                'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $salesOrders->id,
-                'order_index' => 26,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'sales.orders.update'],
-            [
-                'name' => 'Sửa đơn bán hàng',
-                'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $salesOrders->id,
-                'order_index' => 27,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'sales.orders.submit_to_warehouse'],
-            [
-                'name' => 'Gửi kho',
-                'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $salesOrders->id,
-                'order_index' => 28,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        // =========================
-        // WAREHOUSE
-        // =========================
-        $warehouseModule = Menu::updateOrCreate(
+        $warehouse = Menu::updateOrCreate(
             ['permission_key' => 'warehouse.module'],
             [
                 'name' => 'Kho',
                 'path' => null,
-                'page_code' => null,
-                'icon' => 'FiBox',
-                'parent_id' => null,
-                'order_index' => 30,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'warehouse.dashboard.view'],
-            [
-                'name' => 'Tổng quan kho',
-                'path' => '/warehouse/dashboard',
-                'page_code' => 'warehouse.dashboard.index',
-                'icon' => 'FiHome',
-                'parent_id' => $warehouseModule->id,
-                'order_index' => 31,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        $receipts = Menu::updateOrCreate(
-            ['permission_key' => 'warehouse.receipts.view'],
-            [
-                'name' => 'Phiếu nhập',
-                'path' => '/warehouse/receipts',
-                'page_code' => 'warehouse.receipts.index',
-                'icon' => 'FiDownload',
-                'parent_id' => $warehouseModule->id,
-                'order_index' => 32,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'warehouse.receipts.create'],
-            [
-                'name' => 'Tạo phiếu nhập',
-                'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $receipts->id,
-                'order_index' => 33,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        $deliveries = Menu::updateOrCreate(
-            ['permission_key' => 'warehouse.deliveries.view'],
-            [
-                'name' => 'Phiếu giao / xuất kho',
-                'path' => '/warehouse/deliveries',
-                'page_code' => 'warehouse.deliveries.index',
-                'icon' => 'FiTruck',
-                'parent_id' => $warehouseModule->id,
-                'order_index' => 34,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'warehouse.deliveries.create'],
-            [
-                'name' => 'Tạo phiếu giao',
-                'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $deliveries->id,
-                'order_index' => 35,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'warehouse.deliveries.confirm'],
-            [
-                'name' => 'Xác nhận giao hàng',
-                'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $deliveries->id,
-                'order_index' => 36,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        $inventory = Menu::updateOrCreate(
-            ['permission_key' => 'warehouse.inventory.view'],
-            [
-                'name' => 'Tồn kho',
-                'path' => '/warehouse/inventory',
-                'page_code' => 'warehouse.inventory.index',
                 'icon' => 'FiArchive',
-                'parent_id' => $warehouseModule->id,
-                'order_index' => 37,
+                'parent_id' => null,
+                'order_index' => 3,
                 'status' => true,
                 'menu_type' => 'sidebar',
             ]
         );
 
-        Menu::updateOrCreate(
-            ['permission_key' => 'warehouse.inventory.adjust'],
-            [
-                'name' => 'Điều chỉnh tồn kho',
-                'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $inventory->id,
-                'order_index' => 38,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        // =========================
-        // ACCOUNTING
-        // =========================
-        $accountingModule = Menu::updateOrCreate(
+        $accounting = Menu::updateOrCreate(
             ['permission_key' => 'accounting.module'],
             [
                 'name' => 'Kế toán',
                 'path' => null,
-                'page_code' => null,
                 'icon' => 'FiDollarSign',
                 'parent_id' => null,
-                'order_index' => 40,
+                'order_index' => 4,
                 'status' => true,
                 'menu_type' => 'sidebar',
             ]
         );
 
-        Menu::updateOrCreate(
-            ['permission_key' => 'accounting.dashboard.view'],
+        $hr = Menu::updateOrCreate(
+            ['permission_key' => 'hr.module'],
             [
-                'name' => 'Tổng quan kế toán',
-                'path' => '/accounting/dashboard',
-                'page_code' => 'accounting.dashboard.index',
-                'icon' => 'FiHome',
-                'parent_id' => $accountingModule->id,
-                'order_index' => 41,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        $invoices = Menu::updateOrCreate(
-            ['permission_key' => 'accounting.invoices.view'],
-            [
-                'name' => 'Hóa đơn',
-                'path' => '/accounting/invoices',
-                'page_code' => 'accounting.invoices.index',
-                'icon' => 'FiFileText',
-                'parent_id' => $accountingModule->id,
-                'order_index' => 42,
-                'status' => true,
-                'menu_type' => 'sidebar',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'accounting.invoices.create'],
-            [
-                'name' => 'Tạo hóa đơn',
+                'name' => 'Nhân sự',
                 'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $invoices->id,
-                'order_index' => 43,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        $payments = Menu::updateOrCreate(
-            ['permission_key' => 'accounting.payments.view'],
-            [
-                'name' => 'Thanh toán',
-                'path' => '/accounting/payments',
-                'page_code' => 'accounting.payments.index',
-                'icon' => 'FiCreditCard',
-                'parent_id' => $accountingModule->id,
-                'order_index' => 44,
+                'icon' => 'FiUsers',
+                'parent_id' => null,
+                'order_index' => 5,
                 'status' => true,
                 'menu_type' => 'sidebar',
             ]
         );
 
-        Menu::updateOrCreate(
-            ['permission_key' => 'accounting.payments.create'],
+        $system = Menu::updateOrCreate(
+            ['permission_key' => 'system.module'],
             [
-                'name' => 'Ghi nhận thanh toán',
+                'name' => 'Hệ thống',
                 'path' => null,
-                'page_code' => null,
-                'icon' => null,
-                'parent_id' => $payments->id,
-                'order_index' => 45,
-                'status' => true,
-                'menu_type' => 'action',
-            ]
-        );
-
-        Menu::updateOrCreate(
-            ['permission_key' => 'accounting.receivables.view'],
-            [
-                'name' => 'Công nợ',
-                'path' => '/accounting/receivables',
-                'page_code' => 'accounting.receivables.index',
-                'icon' => 'FiBookOpen',
-                'parent_id' => $accountingModule->id,
-                'order_index' => 46,
+                'icon' => 'FiSettings',
+                'parent_id' => null,
+                'order_index' => 6,
                 'status' => true,
                 'menu_type' => 'sidebar',
             ]
         );
+
+        $menus = [
+            // Sales pages
+            ['name' => 'Khách hàng', 'path' => '/customers', 'icon' => 'FiUserCheck', 'parent_id' => $sales->id, 'order_index' => 1, 'status' => true, 'permission_key' => 'sales.customers.view', 'menu_type' => 'sidebar'],
+            ['name' => 'Đơn bán hàng', 'path' => '/sales-orders', 'icon' => 'FiFileText', 'parent_id' => $sales->id, 'order_index' => 2, 'status' => true, 'permission_key' => 'sales.orders.view', 'menu_type' => 'sidebar'],
+
+            // Warehouse pages
+            ['name' => 'Phiếu nhập', 'path' => '/goods-receipts', 'icon' => 'FiDownload', 'parent_id' => $warehouse->id, 'order_index' => 1, 'status' => true, 'permission_key' => 'warehouse.receipts.view', 'menu_type' => 'sidebar'],
+            ['name' => 'Giao hàng', 'path' => '/deliveries', 'icon' => 'FiTruck', 'parent_id' => $warehouse->id, 'order_index' => 2, 'status' => true, 'permission_key' => 'warehouse.deliveries.view', 'menu_type' => 'sidebar'],
+            ['name' => 'Tồn kho', 'path' => '/inventory', 'icon' => 'FiLayers', 'parent_id' => $warehouse->id, 'order_index' => 3, 'status' => true, 'permission_key' => 'warehouse.inventory.view', 'menu_type' => 'sidebar'],
+            ['name' => 'Điều chỉnh kho', 'path' => '/stock-adjustments', 'icon' => 'FiRefreshCcw', 'parent_id' => $warehouse->id, 'order_index' => 4, 'status' => true, 'permission_key' => 'warehouse.adjustments.view', 'menu_type' => 'sidebar'],
+
+            // Accounting pages
+            ['name' => 'Hóa đơn', 'path' => '/invoices', 'icon' => 'FiFile', 'parent_id' => $accounting->id, 'order_index' => 1, 'status' => true, 'permission_key' => 'accounting.invoices.view', 'menu_type' => 'sidebar'],
+            ['name' => 'Thanh toán', 'path' => '/payments', 'icon' => 'FiCreditCard', 'parent_id' => $accounting->id, 'order_index' => 2, 'status' => true, 'permission_key' => 'accounting.payments.view', 'menu_type' => 'sidebar'],
+            ['name' => 'Công nợ', 'path' => '/receivables', 'icon' => 'FiBookOpen', 'parent_id' => $accounting->id, 'order_index' => 3, 'status' => true, 'permission_key' => 'accounting.receivables.view', 'menu_type' => 'sidebar'],
+
+            // HR pages
+            ['name' => 'Nhân viên', 'path' => '/employees', 'icon' => 'FiUsers', 'parent_id' => $hr->id, 'order_index' => 1, 'status' => true, 'permission_key' => 'hr.employees.view', 'menu_type' => 'sidebar'],
+            ['name' => 'Phòng ban HR', 'path' => '/hr/departments', 'icon' => 'FiGrid', 'parent_id' => $hr->id, 'order_index' => 2, 'status' => true, 'permission_key' => 'hr.departments.view', 'menu_type' => 'sidebar'],
+            ['name' => 'Chấm công', 'path' => '/attendance', 'icon' => 'FiClock', 'parent_id' => $hr->id, 'order_index' => 3, 'status' => true, 'permission_key' => 'hr.attendance.view', 'menu_type' => 'sidebar'],
+
+            // System pages
+            ['name' => 'Tài khoản', 'path' => '/users', 'icon' => 'FiUser', 'parent_id' => $system->id, 'order_index' => 1, 'status' => true, 'permission_key' => 'system.users.view', 'menu_type' => 'sidebar'],
+            ['name' => 'Menu', 'path' => '/menus', 'icon' => 'FiMenu', 'parent_id' => $system->id, 'order_index' => 2, 'status' => true, 'permission_key' => 'system.menus.view', 'menu_type' => 'sidebar'],
+            ['name' => 'Phân quyền', 'path' => '/role-permissions', 'icon' => 'FiShield', 'parent_id' => $system->id, 'order_index' => 3, 'status' => true, 'permission_key' => 'system.permissions.view', 'menu_type' => 'sidebar'],
+
+            // Actions
+            ['name' => 'Tạo khách hàng', 'path' => null, 'icon' => null, 'parent_id' => $sales->id, 'order_index' => 101, 'status' => true, 'permission_key' => 'sales.customers.create', 'menu_type' => 'action'],
+            ['name' => 'Cập nhật khách hàng', 'path' => null, 'icon' => null, 'parent_id' => $sales->id, 'order_index' => 102, 'status' => true, 'permission_key' => 'sales.customers.update', 'menu_type' => 'action'],
+
+            ['name' => 'Tạo đơn hàng', 'path' => null, 'icon' => null, 'parent_id' => $sales->id, 'order_index' => 103, 'status' => true, 'permission_key' => 'sales.orders.create', 'menu_type' => 'action'],
+            ['name' => 'Cập nhật đơn hàng', 'path' => null, 'icon' => null, 'parent_id' => $sales->id, 'order_index' => 104, 'status' => true, 'permission_key' => 'sales.orders.update', 'menu_type' => 'action'],
+            ['name' => 'Gửi kho', 'path' => null, 'icon' => null, 'parent_id' => $sales->id, 'order_index' => 105, 'status' => true, 'permission_key' => 'sales.orders.submit_to_warehouse', 'menu_type' => 'action'],
+
+            ['name' => 'Tạo phiếu nhập', 'path' => null, 'icon' => null, 'parent_id' => $warehouse->id, 'order_index' => 201, 'status' => true, 'permission_key' => 'warehouse.receipts.create', 'menu_type' => 'action'],
+            ['name' => 'Tạo giao hàng', 'path' => null, 'icon' => null, 'parent_id' => $warehouse->id, 'order_index' => 202, 'status' => true, 'permission_key' => 'warehouse.deliveries.create', 'menu_type' => 'action'],
+            ['name' => 'Xác nhận giao hàng', 'path' => null, 'icon' => null, 'parent_id' => $warehouse->id, 'order_index' => 203, 'status' => true, 'permission_key' => 'warehouse.deliveries.confirm', 'menu_type' => 'action'],
+            ['name' => 'Điều chỉnh tồn kho', 'path' => null, 'icon' => null, 'parent_id' => $warehouse->id, 'order_index' => 204, 'status' => true, 'permission_key' => 'warehouse.inventory.adjust', 'menu_type' => 'action'],
+
+            ['name' => 'Tạo hóa đơn', 'path' => null, 'icon' => null, 'parent_id' => $accounting->id, 'order_index' => 301, 'status' => true, 'permission_key' => 'accounting.invoices.create', 'menu_type' => 'action'],
+            ['name' => 'Tạo thanh toán', 'path' => null, 'icon' => null, 'parent_id' => $accounting->id, 'order_index' => 302, 'status' => true, 'permission_key' => 'accounting.payments.create', 'menu_type' => 'action'],
+
+            ['name' => 'Tạo nhân viên', 'path' => null, 'icon' => null, 'parent_id' => $hr->id, 'order_index' => 401, 'status' => true, 'permission_key' => 'hr.employees.create', 'menu_type' => 'action'],
+            ['name' => 'Cập nhật nhân viên', 'path' => null, 'icon' => null, 'parent_id' => $hr->id, 'order_index' => 402, 'status' => true, 'permission_key' => 'hr.employees.update', 'menu_type' => 'action'],
+        ];
+
+        foreach ($menus as $menu) {
+            Menu::updateOrCreate(
+                ['permission_key' => $menu['permission_key']],
+                $menu
+            );
+        }
     }
 }

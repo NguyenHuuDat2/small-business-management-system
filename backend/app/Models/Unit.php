@@ -5,18 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Department extends Model
+class Unit extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'department_code',
-        'name',
-        'description'
+        'unit_code',
+        'name'
     ];
 
-public function employees()
+public function products()
     {
-        return $this->hasMany(Employee::class);
+        return $this->hasMany(Product::class);
     }
 }

@@ -5,18 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Department extends Model
+class Supplier extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'department_code',
+        'supplier_code',
         'name',
-        'description'
+        'phone',
+        'address'
     ];
 
-public function employees()
+public function goodsReceipts()
     {
-        return $this->hasMany(Employee::class);
+        return $this->hasMany(GoodsReceipt::class);
     }
 }
