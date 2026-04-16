@@ -18,6 +18,8 @@ import PaymentListPage from "../../modules/accounting/pages/payments/PaymentList
 import ReceivableListPage from "../../modules/accounting/pages/receivables/ReceivableListPage";
 
 import PlaceholderPage from "../../shared/components/ui/PlaceholderPage";
+import ProductPage from "../../modules/warehouse/pages/products/ProductPage";
+
 
 export const pageRegistry = {
   "workspace.index": WorkspacePage,
@@ -29,6 +31,7 @@ export const pageRegistry = {
   "sales.orders.index": SalesOrderListPage,
   "sales.customers.index": CustomerListPage,
 
+  "/warehouse/products": ProductPage,
   "warehouse.dashboard.index": WarehouseDashboardPage,
   "warehouse.inventory.index": InventoryPage,
   "warehouse.receipts.index": GoodsReceiptPage,

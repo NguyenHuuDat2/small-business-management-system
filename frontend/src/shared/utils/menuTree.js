@@ -1,15 +1,16 @@
 export function flattenSidebar(items = []) {
   const result = [];
 
-  for (const item of items) {
-    if (item?.path) {
+  function walk(list) {
+    list.forEach(item => {
       result.push(item);
-    }
 
-    if (item?.children?.length) {
-      result.push(...flattenSidebar(item.children));
-    }
+      if (item.children && item.children.length > 0) {
+        walk(item.children);
+      }
+    });
   }
 
+  walk(items);
   return result;
 }

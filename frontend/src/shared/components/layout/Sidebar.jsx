@@ -135,7 +135,7 @@ function Sidebar({ collapsed }) {
   const location = useLocation();
   const { sidebar, user } = useAuth();
 
-  const menuTree = useMemo(() => sidebar || [], [sidebar]);
+  const menuTree = sidebar;
   const [expandedItems, setExpandedItems] = useState(new Set());
 
   useEffect(() => {

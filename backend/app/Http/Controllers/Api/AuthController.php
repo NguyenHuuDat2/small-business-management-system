@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-
+use App\Models\Menu;
 class AuthController extends Controller
 {
    public function login(Request $request)
@@ -49,7 +49,7 @@ class AuthController extends Controller
         $token = $user->createToken($tokenName)->plainTextToken;
 
         $navigation = $this->transformNavigation($user);
-
+        
         return response()->json([
             'success' => true,
             'message' => 'Đăng nhập thành công',
@@ -152,40 +152,43 @@ class AuthController extends Controller
 
     private function getAllowedMenus(User $user)
     {
-        return $user->role
-            ? $user->role->menus()
-                ->where('status', true)
-                ->orderBy('order_index')
-                ->get()
-            : collect();
+       return Menu::where('status', true)
+    ->orderBy('order_index')
+    ->get();
     }
 
-    private function buildMenuTree($menus, $parentId = null): array
-    {
-        return $menus
-            ->where('parent_id', $parentId)
-            ->sortBy('order_index')
-            ->map(function ($menu) use ($menus) {
-                return [
-                    'id' => $menu->id,
-                    'name' => $menu->name,
-                    'path' => $menu->path,
-                    'page_code' => $menu->page_code,
-                    'icon' => $menu->icon,
-                    'permission_key' => $menu->permission_key,
-                    'menu_type' => $menu->menu_type,
-                    'children' => $this->buildMenuTree($menus, $menu->id),
-                ];
-            })
-            ->values()
-            ->toArray();
+    private function buildMenuTree($items, $parentId = null)
+{
+    $branch = [];
+
+    foreach ($items as $item) {
+
+        if ((int)$item->parent_id === (int)$parentId) {
+
+            $children = $this->buildMenuTree($items, $item->id);
+
+            $branch[] = [
+                'id' => $item->id,
+                'name' => $item->name,
+                'path' => $item->path,
+                'page_code' => $item->page_code,
+                'icon' => $item->icon,
+                'children' => $children
+            ];
+        }
     }
+
+    return $branch;
+}
 
     private function transformNavigation(User $user): array
     {
         $menus = $this->getAllowedMenus($user);
 
-        $sidebarMenus = $menus->where('menu_type', 'sidebar')->values();
+        $sidebarMenus = $menus
+    ->where('menu_type', 'sidebar')
+    ->sortBy('order_index')
+    ->values();
 
         $permissions = $menus
             ->pluck('permission_key')
@@ -193,10 +196,10 @@ class AuthController extends Controller
             ->unique()
             ->values()
             ->toArray();
-
-        return [
-            'sidebar' => $this->buildMenuTree($sidebarMenus),
-            'permissions' => $permissions,
+            return [
+        'sidebar' => array_values(
+        $this->buildMenuTree($sidebarMenus)   ),
+        'permissions' => $permissions,
         ];
     }
 }

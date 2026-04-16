@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\RoleController;
+use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\UnitController;
 use App\Http\Controllers\Api\Hr\EmployeeController as HrEmployeeController;
 use App\Http\Controllers\Api\Hr\DashboardController as HrDashboardController;
 
@@ -36,3 +39,7 @@ Route::prefix('hr')->middleware('auth:sanctum')->group(function () {
 
     Route::get('/department-options', [HrEmployeeController::class, 'departmentOptions']);
 });
+
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/units', [UnitController::class, 'index']);
