@@ -1,0 +1,142 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Customer;
+
+class CustomerSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $types = ['Đại lý', 'Cửa hàng', 'Doanh nghiệp', 'Khách lẻ'];
+        $districts = ['Quận 1', 'Quận 3', 'Quận 7', 'Bình Thạnh', 'Thủ Đức', 'Biên Hòa', 'Dĩ An', 'Tân An'];
+
+        $customerNames = [
+            'Huỳnh Nguyễn Nhật Long',
+            'Triệu Phạm Linh Duy',
+            'Trần Doãn Tùng Dương',
+            'Nguyễn Bảo Kiệt',
+            'Hà Quang Thật',
+            'Lê Tiến Phát',
+            'Nguyễn Tuấn Anh',
+            'Võ Thiên Phú',
+            'Trần Quốc Khánh',
+            'Hồ Khôi Phục',
+            'Siêu Ngọc Tài',
+            'Lê Nguyễn Chí Bảo',
+            'Chung Thành Đạt',
+            'Nguyễn Hoài Anh Kiệt',
+            'Võ Thành Lộc',
+            'Nguyễn Lê Huy',
+            'Tạ Minh Hậu',
+            'Dương Trường Duy',
+            'Nguyễn Hữu Lộc',
+            'Lê Ngọc Phong',
+            'Đặng Mạnh Tấn',
+            'Phan Thành Long',
+            'Nguyễn Đăng Khôi',
+            'Văn Khắc Hải Toàn',
+            'Lâm Đức Hiệp',
+            'Lâm Huỳnh Ngọc Khánh',
+            'Trần Bảo Long',
+            'Nguyễn Anh Nguyên',
+            'Trần Đức Hải',
+            'Trần Hoài Phúc',
+            'Lương Văn Thắng',
+            'Nguyễn Phi Thưởng',
+            'Đoàn Hiệp Sỹ',
+            'Trần Thị Yến Vy',
+            'Nguyễn Hà Tuấn Anh',
+            'Lê Thành Đức',
+            'Mè Thái Huy',
+            'Bùi Nhật Lâm',
+            'Nguyễn Hoàng Lực',
+            'Nguyễn Văn Tuấn Anh',
+            'Trịnh Công Đạt',
+            'Trần Trung Đông',
+            'Trần Tiến Phát',
+            'Hồ Hoài Phương',
+            'Phan Thị Bích Chi',
+            'Huỳnh Dương Huỳnh',
+            'Trần Bội Ngọc',
+            'Lê Kiều Phương',
+            'Phạm Minh Quân',
+            'Nguyễn Hoàng Dương',
+            'Võ Thanh Huy',
+            'Nguyễn Hữu Khang',
+            'Đậu Quốc Khánh',
+            'Lê Minh Khánh',
+            'Trần Tuấn Phong',
+            'Huỳnh Thế Quang',
+            'Trương Mai Quốc Hoàng',
+            'Nguyễn Đàm Thành Đạt',
+            'Nguyễn Thái Bảo',
+            'Trang Huỳnh Như Ý',
+            'Lương Thị Mỹ Giang',
+            'Nguyễn Gia Hân',
+            'Trần Phát Tài',
+            'Phạm Minh Thân',
+            'Phạm Đức Toàn',
+            'Lê Quốc Trí',
+            'Võ Trung Công',
+            'Nguyễn Thanh Tiền',
+            'Lê Hoàng Phúc',
+            'Vương Minh Trí',
+            'Nguyễn Văn Huyền',
+            'Trần Ngọc Châu',
+            'Thái Văn Hậu',
+            'Nguyễn Minh Hoàng',
+            'Nguyễn Đình Phương',
+            'Nguyễn Anh Quân',
+            'Nguyễn Thành Tài',
+            'Huỳnh Anh Vũ',
+            'Nguyễn Vũ Ân Điển',
+            'Võ Nguyễn Gia Hưng',
+            'Nguyễn Hữu Đạt',
+            'Phạm Văn Sơn',
+            'Lý Thu Thảo',
+            'Lê Trọng Bình',
+            'Văng Phước Nhân',
+            'Nguyễn Phú Quốc',
+            'Nguyễn Phú Thịnh',
+            'Huỳnh Hữu Trường',
+            'Đặng Phước Long',
+            'Lê Thành Tài',
+            'Võ Hoài Thọ',
+            'Nguyễn Thế Chương',
+            'Nguyễn Trần Công Min',
+            'Bùi Minh Nhựt',
+            'Nguyễn Đức Quang',
+            'Nguyễn Trần Quốc Quang',
+            'Phạm Bảo Tâm',
+            'Trương Hoàng Thái Thuận',
+            'Nguyễn Tiến Đạt',
+            'Trương Ngọc Đỉnh',
+            'Lê Thị Diệu Huyền',
+            'Nguyễn Tuấn Kiệt',
+            'Nguyễn Đức Vũ',
+            'Phạm Mạnh Toàn',
+            'Nguyễn Hoàng Quân',
+            'Đới Công Luận',
+            'Hồ Quốc Thịnh',
+            'Trang Sĩ Anh Hào',
+            'Đặng Hải Hoàng Phúc',
+        ];
+
+        foreach ($customerNames as $index => $name) {
+            $i = $index + 1;
+
+            Customer::updateOrCreate(
+                ['customer_code' => 'CUS' . str_pad($i, 4, '0', STR_PAD_LEFT)],
+                [
+                    'name' => $name,
+                    'phone' => '0933' . str_pad((string) $i, 6, '0', STR_PAD_LEFT),
+                    'address' => $i . ' Nguyễn Văn Linh, ' . $districts[$index % count($districts)],
+                    'customer_type' => $types[$index % count($types)],
+                    'note' => 'Khách hàng seed mẫu' . $i,
+                ]
+            );
+        }
+    }
+}

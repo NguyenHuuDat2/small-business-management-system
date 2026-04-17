@@ -16,44 +16,74 @@ class RolePermissionSeeder extends Seeder
         $warehouse = Role::where('role_code', 'WAREHOUSE')->firstOrFail();
         $accountant = Role::where('role_code', 'ACCOUNTANT')->firstOrFail();
 
-        // Admin có toàn quyền
+        /*
+        |--------------------------------------------------------------------------
+        | ADMIN - toàn quyền
+        |--------------------------------------------------------------------------
+        */
         $admin->menus()->sync(Menu::pluck('id')->toArray());
 
-        // HR
+        /*
+        |--------------------------------------------------------------------------
+        | HR
+        |--------------------------------------------------------------------------
+        */
         $hr->menus()->sync(
             Menu::whereIn('permission_key', [
                 'workspace.view',
+
                 'hr.module',
-                'hr.dashboard.view',
                 'hr.employees.view',
                 'hr.employees.create',
                 'hr.employees.update',
-
+                'hr.departments.view',
+                'hr.attendance.view',
             ])->pluck('id')->toArray()
         );
 
-        // Sales
+        /*
+        |--------------------------------------------------------------------------
+        | SALES
+        |--------------------------------------------------------------------------
+        */
         $sales->menus()->sync(
             Menu::whereIn('permission_key', [
                 'workspace.view',
+
                 'sales.module',
+
+                // dashboard
                 'sales.dashboard.view',
+
+                // khách hàng
                 'sales.customers.view',
                 'sales.customers.create',
                 'sales.customers.update',
+
+                // đơn hàng
                 'sales.orders.view',
                 'sales.orders.create',
                 'sales.orders.update',
                 'sales.orders.submit_to_warehouse',
+
+                // sản phẩm
+                'sales.products.view',
+
+                // báo cáo
+                'sales.reports.view',
             ])->pluck('id')->toArray()
         );
 
-        // Warehouse
+        /*
+        |--------------------------------------------------------------------------
+        | WAREHOUSE
+        |--------------------------------------------------------------------------
+        */
         $warehouse->menus()->sync(
             Menu::whereIn('permission_key', [
                 'workspace.view',
+
                 'warehouse.module',
-                'warehouse.dashboard.view',
                 'warehouse.receipts.view',
                 'warehouse.receipts.create',
                 'warehouse.deliveries.view',
@@ -61,15 +91,20 @@ class RolePermissionSeeder extends Seeder
                 'warehouse.deliveries.confirm',
                 'warehouse.inventory.view',
                 'warehouse.inventory.adjust',
+                'warehouse.adjustments.view',
             ])->pluck('id')->toArray()
         );
 
-        // Accountant
+        /*
+        |--------------------------------------------------------------------------
+        | ACCOUNTANT
+        |--------------------------------------------------------------------------
+        */
         $accountant->menus()->sync(
             Menu::whereIn('permission_key', [
                 'workspace.view',
+
                 'accounting.module',
-                'accounting.dashboard.view',
                 'accounting.invoices.view',
                 'accounting.invoices.create',
                 'accounting.payments.view',

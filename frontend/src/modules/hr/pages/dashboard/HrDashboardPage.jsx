@@ -51,7 +51,7 @@ function ProgressRow({ name, total, max }) {
 }
 
 function HrDashboardPage() {
-  const { hasPermission } = useAuth();
+  const { hasPermission, loading: authLoading, isAuthenticated } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -97,8 +97,11 @@ function HrDashboardPage() {
   };
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) return;
+
     fetchDashboard();
-  }, []);
+  }, [authLoading, isAuthenticated]);
 
   const maxDepartmentTotal = useMemo(() => {
     if (!dashboard.by_department.length) return 0;
@@ -113,10 +116,15 @@ function HrDashboardPage() {
     );
   }
 
-  if (error) {
+  const hasData =
+    dashboard.overview.total_employees > 0 ||
+    dashboard.by_department.length > 0 ||
+    dashboard.recent_employees.length > 0;
+
+  if ((loading || authLoading) && !hasData) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-slate-500">Đang tải tổng quan nhân sự...</p>
       </div>
     );
   }

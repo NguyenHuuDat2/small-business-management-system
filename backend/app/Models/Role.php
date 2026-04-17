@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
@@ -12,10 +12,10 @@ class Role extends Model
     protected $fillable = [
         'role_code',
         'name',
-        'description',
+        'description'
     ];
 
-    public function users()
+public function users()
     {
         return $this->hasMany(User::class);
     }
@@ -25,3 +25,6 @@ class Role extends Model
         return $this->belongsToMany(Menu::class, 'role_permissions', 'role_id', 'menu_id');
     }
 }
+
+
+
