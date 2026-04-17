@@ -7,27 +7,36 @@ import PlaceholderPage from "../../shared/components/ui/PlaceholderPage";
 
 export function renderDynamicRoutes(sidebar = []) {
   const flatMenus = flattenSidebar(sidebar);
+  const uniquePaths = new Set();
 
-  return flatMenus.map((menu) => {
-    const PageComponent = resolvePageComponent(menu);
+  return flatMenus
+    .filter((menu) => {
+      if (!menu?.path) return false;
+      if (menu?.menu_type === "action") return false;
+      if (uniquePaths.has(menu.path)) return false;
 
-    const content =
-      PageComponent === PlaceholderPage ? (
-        <PlaceholderPage title={menu.name} />
-      ) : (
-        <PageComponent menu={menu} />
+      uniquePaths.add(menu.path);
+      return true;
+    })
+    .map((menu) => {
+      const PageComponent = resolvePageComponent(menu);
+
+      return (
+        <Route
+          key={menu.path}
+          path={menu.path}
+          element={
+            <ProtectedRoute>
+              <MainLayout>
+                {PageComponent === PlaceholderPage ? (
+                  <PlaceholderPage title={menu.name} />
+                ) : (
+                  <PageComponent menu={menu} />
+                )}
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
       );
-
-    return (
-      <Route
-        key={menu.path}
-        path={menu.path}
-        element={
-          <ProtectedRoute>
-            <MainLayout>{content}</MainLayout>
-          </ProtectedRoute>
-        }
-      />
-    );
-  });
+    });
 }
