@@ -10,6 +10,9 @@ use App\Livewire\Admin\Menus\Index as MenusIndex;
 use App\Livewire\Admin\RolePermissions\Index as RolePermissionsIndex;
 use App\Livewire\Admin\Employees\Index as EmployeesIndex;
 use App\Livewire\Admin\Departments\Index as DepartmentsIndex;
+use App\Livewire\Admin\Invoices\Index as InvoicesIndex;
+use App\Livewire\Admin\Payments\Index as PaymentsIndex;
+use App\Livewire\Admin\Receivables\Index as ReceivablesIndex;
 
 Route::get('/health', function () {
     return response('ok', 200)->header('Content-Type', 'text/plain');
@@ -51,6 +54,15 @@ Route::prefix('admin')->group(function () {
 
         Route::get('/departments', DepartmentsIndex::class)
             ->name('admin.departments');
+        
+        Route::get('/invoices', InvoicesIndex::class)
+            ->name('admin.invoices');
+
+        Route::get('/payments', PaymentsIndex::class)
+            ->name('admin.payments');
+            
+        Route::get('/receivables', ReceivablesIndex::class)
+            ->name('admin.receivables');
 
         Route::post('/logout', [AdminAuthController::class, 'logout'])
             ->name('admin.logout');
