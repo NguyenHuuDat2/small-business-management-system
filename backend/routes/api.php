@@ -4,8 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\RoleController;
+
 use App\Http\Controllers\Api\Hr\EmployeeController as HrEmployeeController;
 use App\Http\Controllers\Api\Hr\DashboardController as HrDashboardController;
+
 use App\Http\Controllers\Api\Sales\SalesReferenceController;
 use App\Http\Controllers\Api\Sales\SalesOrderController;
 use App\Http\Controllers\Api\Sales\CustomerController;
@@ -13,7 +15,13 @@ use App\Http\Controllers\Api\Sales\SalesDashboardController;
 use App\Http\Controllers\Api\Sales\SalesProductController;
 use App\Http\Controllers\Api\Sales\SalesReportController;
 
-//auth
+use App\Http\Controllers\Api\Accounting\InvoiceController;
+
+/*
+|--------------------------------------------------------------------------
+| AUTH
+|--------------------------------------------------------------------------
+*/
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
@@ -25,34 +33,35 @@ Route::prefix('auth')->group(function () {
     });
 });
 
+/*
+|--------------------------------------------------------------------------
+| USERS / ROLE
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth:sanctum', 'admin'])->apiResource('users', UserController::class);
-
-//role
 Route::middleware(['auth:sanctum', 'admin'])->get('/roles', [RoleController::class, 'index']);
 
-
-//sales
-
+/*
+|--------------------------------------------------------------------------
+| SALES
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth:sanctum'])->prefix('sales')->group(function () {
-    // dashboard
+
     Route::get('/dashboard/stats', [SalesDashboardController::class, 'stats']);
 
-    // reference data
     Route::get('/reference/customers', [SalesReferenceController::class, 'customers']);
     Route::get('/reference/products', [SalesReferenceController::class, 'products']);
 
-    // customers
     Route::get('/customers', [CustomerController::class, 'index']);
     Route::post('/customers', [CustomerController::class, 'store']);
     Route::put('/customers/{id}', [CustomerController::class, 'update']);
 
-    // sales orders
     Route::get('/orders', [SalesOrderController::class, 'index']);
     Route::get('/orders/{id}', [SalesOrderController::class, 'show']);
     Route::post('/orders', [SalesOrderController::class, 'store']);
     Route::put('/orders/{id}', [SalesOrderController::class, 'update']);
 
-    // workflow
     Route::post('/orders/{id}/submit', [SalesOrderController::class, 'submit']);
     Route::post('/orders/{id}/approve', [SalesOrderController::class, 'approve']);
     Route::post('/orders/{id}/reject', [SalesOrderController::class, 'reject']);
@@ -62,16 +71,37 @@ Route::middleware(['auth:sanctum'])->prefix('sales')->group(function () {
     Route::get('/reports/overview', [SalesReportController::class, 'overview']);
 });
 
+/*
+|--------------------------------------------------------------------------
+| HR
+|--------------------------------------------------------------------------
+*/
+Route::prefix('hr')->middleware('auth:sanctum')->group(function () {
 
-//hr
-// Route::prefix('hr')->middleware('auth:sanctum')->group(function () {
-//     Route::get('/dashboard', [HrDashboardController::class, 'index']);
+    Route::get('/dashboard', [HrDashboardController::class, 'index']);
 
-//     Route::get('/employees', [HrEmployeeController::class, 'index']);
-//     Route::post('/employees', [HrEmployeeController::class, 'store']);
-//     Route::get('/employees/{employee}', [HrEmployeeController::class, 'show']);
-//     Route::put('/employees/{employee}', [HrEmployeeController::class, 'update']);
-//     Route::delete('/employees/{employee}', [HrEmployeeController::class, 'destroy']);
+    Route::get('/employees', [HrEmployeeController::class, 'index']);
+    Route::post('/employees', [HrEmployeeController::class, 'store']);
+    Route::get('/employees/{employee}', [HrEmployeeController::class, 'show']);
+    Route::put('/employees/{employee}', [HrEmployeeController::class, 'update']);
+    Route::delete('/employees/{employee}', [HrEmployeeController::class, 'destroy']);
 
-//     Route::get('/department-options', [HrEmployeeController::class, 'departmentOptions']);
-// });
+    Route::get('/department-options', [HrEmployeeController::class, 'departmentOptions']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| ACCOUNTING
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth:sanctum'])->prefix('accounting')->group(function () {
+
+    Route::get('/invoices', [InvoiceController::class, 'index']);
+    Route::post('/invoices', [InvoiceController::class, 'store']);
+    Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
+    Route::patch('/invoices/{id}/status', [InvoiceController::class, 'updateStatus']);
+    Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy']);
+
+    Route::get('/receivables', [InvoiceController::class, 'receivables']);
+    Route::get('/payments', [InvoiceController::class, 'payments']);
+});
