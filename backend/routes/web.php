@@ -58,6 +58,16 @@ Route::prefix('admin')->group(function () {
         Route::get('/customers', \App\Livewire\Admin\Customers\Index::class)
             ->name('admin.customers');
 
+        Route::get('/categories', \App\Livewire\Admin\CategoryProduct::class)
+            ->name('admin.categories');
+
+        Route::post('/logout', [AdminAuthController::class, 'logout'])
+        ->name('admin.logout');
+
+        Route::get('/customers', \App\Livewire\Admin\Customers\Index::class)
+            ->name('admin.customers');
+
+
         Route::get('/invoices', InvoicesIndex::class)
             ->name('admin.invoices');
 
