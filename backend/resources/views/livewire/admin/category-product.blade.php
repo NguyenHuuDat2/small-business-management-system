@@ -2,7 +2,25 @@
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-xl font-bold text-slate-800">Danh mục sản phẩm</h2>
-            <button class="bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-semibold">+ Thêm danh mục</button>
+            <button wire:click="openAddModal" class="bg-emerald-500 ...">+ Thêm danh mục</button>
+
+@if($isAddCategoryModalOpen)
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+        <h3 class="text-lg font-bold mb-4 text-slate-800">Thêm danh mục mới</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-black uppercase text-slate-400 mb-1">Tên danh mục</label>
+                <input type="text" wire:model="category_name" class="w-full border rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500/20">
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+            <button wire:click="closeAddModal" class="text-slate-400 font-bold px-4">Hủy</button>
+            <button wire:click="saveCategory" class="bg-emerald-500 text-white px-6 py-2 rounded-xl font-bold">Lưu lại</button>
+        </div>
+    </div>
+</div>
+@endif
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 transition-all duration-500 overflow-hidden"

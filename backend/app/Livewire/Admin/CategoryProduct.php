@@ -71,4 +71,22 @@ class CategoryProduct extends Component
             'products' => $products
         ])->layout('layouts.admin');
     }
+public $category_name, $category_code;
+public $isAddCategoryModalOpen = false;
+
+public function openAddModal() { $this->isAddCategoryModalOpen = true; }
+public function closeAddModal() { $this->isAddCategoryModalOpen = false; }
+
+public function saveCategory()
+{
+    $this->validate(['category_name' => 'required|min:3']);
+    
+    \App\Models\Category::create([
+        'name' => $this->category_name,
+        'category_code' => $this->category_code ?? strtoupper(str_replace(' ', '_', $this->category_name)),
+    ]);
+
+    $this->reset(['category_name', 'category_code', 'isAddCategoryModalOpen']);
+    session()->flash('message', 'Thêm danh mục thành công!');
+}
 }

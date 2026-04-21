@@ -10,6 +10,9 @@ use App\Livewire\Admin\Menus\Index as MenusIndex;
 use App\Livewire\Admin\RolePermissions\Index as RolePermissionsIndex;
 use App\Livewire\Admin\Employees\Index as EmployeesIndex;
 use App\Livewire\Admin\Departments\Index as DepartmentsIndex;
+use App\Livewire\Admin\Invoices\Index as InvoicesIndex;
+use App\Livewire\Admin\Payments\Index as PaymentsIndex;
+use App\Livewire\Admin\Receivables\Index as ReceivablesIndex;
 
 Route::get('/health', function () {
     return response('ok', 200)->header('Content-Type', 'text/plain');
@@ -52,8 +55,6 @@ Route::prefix('admin')->group(function () {
         Route::get('/departments', DepartmentsIndex::class)
             ->name('admin.departments');
 
-<<<<<<< Updated upstream
-=======
         Route::get('/customers', \App\Livewire\Admin\Customers\Index::class)
             ->name('admin.customers');
 
@@ -62,6 +63,11 @@ Route::prefix('admin')->group(function () {
 
         Route::post('/logout', [AdminAuthController::class, 'logout'])
         ->name('admin.logout');
+
+        Route::get('/customers', \App\Livewire\Admin\Customers\Index::class)
+            ->name('admin.customers');
+
+
         Route::get('/invoices', InvoicesIndex::class)
             ->name('admin.invoices');
 
@@ -71,7 +77,6 @@ Route::prefix('admin')->group(function () {
         Route::get('/receivables', ReceivablesIndex::class)
             ->name('admin.receivables');
 
->>>>>>> Stashed changes
         Route::post('/logout', [AdminAuthController::class, 'logout'])
             ->name('admin.logout');
     });
