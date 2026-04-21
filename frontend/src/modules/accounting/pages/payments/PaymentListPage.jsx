@@ -20,7 +20,6 @@ import {
   formatCurrency,
   formatDate,
   getInvoiceStatusMeta,
-  pickPaymentMethod,
   toNumber,
 } from "../../utils/accountingHelpers";
 
@@ -33,24 +32,23 @@ const defaultMeta = {
 
 const defaultForm = {
   invoice_no: "",
-  payment_method: "Chuyen khoan",
+  payment_method: "Chuyển khoản",
   amount: "",
   note: "",
 };
 
-function mapInvoiceToPayment(invoice) {
+function mapPaymentRow(payment) {
   return {
-    id: invoice.id,
-    invoiceNo: invoice.invoice_no,
-    paymentNo: `PT-${invoice.invoice_no || invoice.id}`,
-    customerName: invoice.customer?.name || "Khach le",
-    orderNo: invoice.sales_order?.order_no || "-",
-    amount: toNumber(invoice.total_amount),
-    invoiceStatus: invoice.status,
-    paymentMethod: pickPaymentMethod(invoice.id),
-    paidAt:
-      invoice.status === "Paid" ? addDays(invoice.created_at, 1) : null,
-    createdAt: invoice.created_at,
+    id: payment.id,
+    invoiceNo: payment.invoice_no,
+    paymentNo: payment.payment_no || `PT-${payment.invoice_no || payment.id}`,
+    customerName: payment.customer_name || "Khách lẻ",
+    orderNo: payment.order_no || "-",
+    amount: toNumber(payment.amount),
+    invoiceStatus: payment.status,
+    paymentMethod: payment.payment_method || "Chưa cập nhật",
+    paidAt: payment.paid_at || null,
+    createdAt: payment.created_at,
   };
 }
 
@@ -71,10 +69,10 @@ function PaymentStatusBadge({ status }) {
     >
       {icon}
       {meta.code === "Paid"
-        ? "Da thu"
+        ? "Đã thu"
         : meta.code === "Cancelled"
-        ? "Khong thu"
-        : "Cho thu"}
+        ? "Không thu"
+        : "Chờ thu"}
     </span>
   );
 }
@@ -105,14 +103,14 @@ function PaymentListPage() {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
 
-      const response = await invoiceService.list({
+      const response = await invoiceService.listPayments({
         search: currentFilters.search,
         status: currentFilters.status,
         page: currentFilters.page,
         per_page: 12,
       });
       const payload = response?.data || {};
-      const rows = (payload.data || []).map(mapInvoiceToPayment);
+      const rows = (payload.data || []).map(mapPaymentRow);
 
       setPayments(rows);
       setMeta({
@@ -124,7 +122,7 @@ function PaymentListPage() {
     } catch {
       setPayments([]);
       setMeta(defaultMeta);
-      setError("Khong tai duoc danh sach thanh toan");
+      setError("Không tải được danh sách thanh toán");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -137,14 +135,15 @@ function PaymentListPage() {
   }, [filters.page, filters.status]);
 
   const stats = useMemo(() => {
+    const normalized = (status) => String(status || "").toLowerCase();
     const collectedAmount = payments
-      .filter((item) => item.invoiceStatus === "Paid")
+      .filter((item) => normalized(item.invoiceStatus) === "paid")
       .reduce((sum, item) => sum + item.amount, 0);
     const pendingAmount = payments
-      .filter((item) => item.invoiceStatus === "Pending")
+      .filter((item) => normalized(item.invoiceStatus) === "pending")
       .reduce((sum, item) => sum + item.amount, 0);
     const failedCount = payments.filter(
-      (item) => item.invoiceStatus === "Cancelled"
+      (item) => normalized(item.invoiceStatus) === "cancelled"
     ).length;
 
     return {
@@ -185,7 +184,7 @@ function PaymentListPage() {
 
   const handleSubmitCreate = (event) => {
     event.preventDefault();
-    toast.success("Da luu phieu thu (UI demo, chua goi API)");
+    toast.success("Đã lưu phiếu thu (UI demo, chưa gọi API)");
     closeCreateModal();
   };
 
@@ -195,10 +194,10 @@ function PaymentListPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-800">
-              Thanh toan
+              Thanh toán
             </h1>
             <p className="text-sm font-medium text-slate-500">
-              Theo doi phieu thu, phuong thuc thanh toan va trang thai thu tien.
+              Theo dõi phiếu thu, phương thức thanh toán và trạng thái thu tiền.
             </p>
           </div>
 
@@ -209,7 +208,7 @@ function PaymentListPage() {
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Da thu tren trang
+                  Đã thu trên trang
                 </p>
                 <p className="text-sm font-bold text-slate-700">
                   {formatCurrency(stats.collectedAmount)}
@@ -223,7 +222,7 @@ function PaymentListPage() {
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Cho thu tren trang
+                  Chờ thu trên trang
                 </p>
                 <p className="text-sm font-bold text-slate-700">
                   {formatCurrency(stats.pendingAmount)}
@@ -237,10 +236,10 @@ function PaymentListPage() {
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Khong thu duoc
+                  Không thu được
                 </p>
                 <p className="text-sm font-bold text-slate-700">
-                  {stats.failedCount} phieu
+                  {stats.failedCount} phiếu
                 </p>
               </div>
             </div>
@@ -257,7 +256,7 @@ function PaymentListPage() {
                 type="text"
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Tim ma phieu thu, ma hoa don, khach hang..."
+                placeholder="Tìm mã phiếu thu, mã hóa đơn, khách hàng..."
                 className="w-full border-none bg-transparent px-3 py-2.5 text-sm outline-none"
               />
             </div>
@@ -277,10 +276,10 @@ function PaymentListPage() {
                 }
                 className="w-full bg-transparent py-2.5 text-sm outline-none"
               >
-                <option value="">Tat ca trang thai</option>
-                <option value="Paid">Da thu</option>
-                <option value="Pending">Cho thu</option>
-                <option value="Cancelled">Khong thu</option>
+                <option value="">Tất cả trạng thái</option>
+                <option value="Paid">Đã thu</option>
+                <option value="Pending">Chờ thu</option>
+                <option value="Cancelled">Không thu</option>
               </select>
             </div>
           </div>
@@ -300,7 +299,7 @@ function PaymentListPage() {
                 className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-700"
               >
                 <FiPlus />
-                Ghi nhan
+                Ghi nhận
               </button>
             )}
           </div>
@@ -312,21 +311,21 @@ function PaymentListPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="px-6 py-4">Ma Phieu Thu</th>
-                <th className="px-6 py-4">Hoa Don</th>
-                <th className="px-6 py-4">Khach Hang</th>
-                <th className="px-6 py-4">Phuong Thuc</th>
-                <th className="px-6 py-4">So Tien</th>
-                <th className="px-6 py-4">Ngay Thu</th>
-                <th className="px-6 py-4">Trang Thai</th>
-                <th className="px-6 py-4">Don Hang</th>
+                <th className="px-6 py-4">Mã phiếu thu</th>
+                <th className="px-6 py-4">Hóa đơn</th>
+                <th className="px-6 py-4">Khách hàng</th>
+                <th className="px-6 py-4">Phương thức</th>
+                <th className="px-6 py-4">Số tiền</th>
+                <th className="px-6 py-4">Ngày thu</th>
+                <th className="px-6 py-4">Trạng thái</th>
+                <th className="px-6 py-4">Đơn hàng</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
                   <td colSpan="8" className="py-20 text-center text-slate-400">
-                    Dang tai du lieu thanh toan...
+                    Đang tải dữ liệu thanh toán...
                   </td>
                 </tr>
               ) : error ? (
@@ -362,7 +361,7 @@ function PaymentListPage() {
                     <td className="px-6 py-4 text-slate-500">
                       {payment.paidAt
                         ? formatDate(payment.paidAt)
-                        : `Du kien ${formatDate(addDays(payment.createdAt, 3))}`}
+                        : `Dự kiến ${formatDate(addDays(payment.createdAt, 3))}`}
                     </td>
                     <td className="px-6 py-4">
                       <PaymentStatusBadge status={payment.invoiceStatus} />
@@ -375,7 +374,7 @@ function PaymentListPage() {
               ) : (
                 <tr>
                   <td colSpan="8" className="py-20 text-center text-slate-400">
-                    Khong co phieu thu phu hop
+                    Không có phiếu thu phù hợp
                   </td>
                 </tr>
               )}
@@ -385,7 +384,7 @@ function PaymentListPage() {
 
         <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/40 px-6 py-4">
           <p className="text-xs font-semibold text-slate-500">
-            Trang {meta.current_page} / {meta.last_page} - Tong {meta.total} ban
+            Trang {meta.current_page} / {meta.last_page} - Tổng {meta.total} bản
             ghi
           </p>
           <div className="flex gap-2">
@@ -398,7 +397,7 @@ function PaymentListPage() {
               className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
             >
               <FiChevronLeft />
-              Truoc
+              Trước
             </button>
             <button
               type="button"
@@ -421,10 +420,10 @@ function PaymentListPage() {
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-800">
-                  Ghi nhan thanh toan
+                  Ghi nhận thanh toán
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Form giao dien de bo sung API tao phieu thu sau nay.
+                  Form giao diện để bổ sung API tạo phiếu thu sau này.
                 </p>
               </div>
               <button
@@ -432,14 +431,14 @@ function PaymentListPage() {
                 onClick={closeCreateModal}
                 className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
               >
-                Dong
+                Đóng
               </button>
             </div>
 
             <form onSubmit={handleSubmitCreate} className="space-y-4 p-5">
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Ma hoa don
+                  Mã hóa đơn
                 </label>
                 <input
                   value={form.invoice_no}
@@ -454,7 +453,7 @@ function PaymentListPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700">
-                    Phuong thuc
+                    Phương thức
                   </label>
                   <select
                     value={form.payment_method}
@@ -466,15 +465,15 @@ function PaymentListPage() {
                     }
                     className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-teal-500/20"
                   >
-                    <option>Chuyen khoan</option>
-                    <option>Tien mat</option>
-                    <option>Vi dien tu</option>
+                    <option>Chuyển khoản</option>
+                    <option>Tiền mặt</option>
+                    <option>Ví điện tử</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="mb-1 block text-sm font-medium text-slate-700">
-                    So tien
+                    Số tiền
                   </label>
                   <input
                     type="number"
@@ -490,7 +489,7 @@ function PaymentListPage() {
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Ghi chu
+                  Ghi chú
                 </label>
                 <textarea
                   rows={3}
@@ -508,13 +507,13 @@ function PaymentListPage() {
                   onClick={closeCreateModal}
                   className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
-                  Huy
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   className="rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700"
                 >
-                  Luu phieu thu
+                  Lưu phiếu thu
                 </button>
               </div>
             </form>

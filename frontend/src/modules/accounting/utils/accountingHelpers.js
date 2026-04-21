@@ -1,4 +1,4 @@
-const PAYMENT_METHODS = ["Chuyen khoan", "Tien mat", "Vi dien tu"];
+const PAYMENT_METHODS = ["Chuyển khoản", "Tiền mặt", "Ví điện tử"];
 
 export function toNumber(value) {
   const number = Number(value || 0);
@@ -32,7 +32,7 @@ export function getInvoiceStatusMeta(status) {
   if (normalized === "Paid") {
     return {
       code: "Paid",
-      label: "Da thanh toan",
+      label: "Đã thanh toán",
       className: "bg-emerald-100 text-emerald-700",
     };
   }
@@ -40,14 +40,14 @@ export function getInvoiceStatusMeta(status) {
   if (normalized === "Cancelled") {
     return {
       code: "Cancelled",
-      label: "Da huy",
+      label: "Đã hủy",
       className: "bg-rose-100 text-rose-700",
     };
   }
 
   return {
     code: "Pending",
-    label: "Cho thanh toan",
+    label: "Chờ thanh toán",
     className: "bg-amber-100 text-amber-700",
   };
 }

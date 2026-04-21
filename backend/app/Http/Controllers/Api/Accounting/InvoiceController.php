@@ -4,33 +4,158 @@ namespace App\Http\Controllers\Api\Accounting;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class InvoiceController extends Controller
 {
+    private const STATUS_MAP = [
+        'pending' => 'Pending',
+        'paid' => 'Paid',
+        'cancelled' => 'Cancelled',
+        'canceled' => 'Cancelled',
+        'completed' => 'Paid',
+        'draft' => 'Pending',
+    ];
+
     /**
      * Lấy danh sách hóa đơn (Dùng cho Table List)
      * URL: GET /api/accounting/invoices
      */
     public function index(Request $request)
     {
+        $status = $this->normalizeStatus($request->status);
+
         $query = Invoice::with(['customer:id,name', 'salesOrder:id,order_no']);
 
         // Filter search
-        if ($request->status) {
-            $query->where('status', $request->status);
+        if ($status) {
+            $query->whereRaw('LOWER(status) = ?', [strtolower($status)]);
         }
 
         if ($request->search) {
-            $query->where('invoice_no', 'like', "%{$request->search}%");
+            $search = trim((string) $request->search);
+            $query->where(function ($subQuery) use ($search) {
+                $subQuery->where('invoice_no', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                        $customerQuery->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('salesOrder', function ($orderQuery) use ($search) {
+                        $orderQuery->where('order_no', 'like', "%{$search}%");
+                    });
+            });
         }
 
         $invoices = $query->orderBy('created_at', 'desc')
                           ->paginate($request->per_page ?? 15);
         
         return response()->json($invoices);
+    }
+
+    /**
+     * Danh sách công nợ phải thu.
+     * URL: GET /api/accounting/receivables
+     */
+    public function receivables(Request $request)
+    {
+        $perPage = max(1, min((int) $request->query('per_page', 12), 100));
+        $search = trim((string) $request->query('search', ''));
+        $status = $this->normalizeStatus($request->query('status', ''));
+
+        $query = Invoice::query()
+            ->with(['customer:id,name', 'salesOrder:id,order_no'])
+            ->select([
+                'id',
+                'invoice_no',
+                'customer_id',
+                'sales_order_id',
+                'total_amount',
+                'status',
+                'created_at',
+                'updated_at',
+            ])
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($subQuery) use ($search) {
+                    $subQuery->where('invoice_no', 'like', "%{$search}%")
+                        ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                            $customerQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('salesOrder', function ($orderQuery) use ($search) {
+                            $orderQuery->where('order_no', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->when($status !== '', function ($q) use ($status) {
+                $q->whereRaw('LOWER(status) = ?', [strtolower($status)]);
+            })
+            ->orderByDesc('created_at');
+
+        return response()->json($query->paginate($perPage)->appends($request->query()));
+    }
+
+    /**
+     * Danh sách phiếu thu.
+     * URL: GET /api/accounting/payments
+     */
+    public function payments(Request $request)
+    {
+        $perPage = max(1, min((int) $request->query('per_page', 12), 100));
+        $search = trim((string) $request->query('search', ''));
+        $status = $this->normalizeStatus($request->query('status', ''));
+
+        $query = Payment::query()
+            ->with([
+                'invoice:id,invoice_no,customer_id,sales_order_id,status',
+                'invoice.customer:id,name',
+                'invoice.salesOrder:id,order_no',
+            ])
+            ->select([
+                'id',
+                'payment_no',
+                'invoice_id',
+                'amount',
+                'payment_method',
+                'status',
+                'created_at',
+                'updated_at',
+            ])
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($subQuery) use ($search) {
+                    $subQuery->where('payment_no', 'like', "%{$search}%")
+                        ->orWhereHas('invoice', function ($invoiceQuery) use ($search) {
+                            $invoiceQuery->where('invoice_no', 'like', "%{$search}%")
+                                ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                                    $customerQuery->where('name', 'like', "%{$search}%");
+                                });
+                        });
+                });
+            })
+            ->when($status !== '', function ($q) use ($status) {
+                $q->whereHas('invoice', function ($invoiceQuery) use ($status) {
+                    $invoiceQuery->whereRaw('LOWER(status) = ?', [strtolower($status)]);
+                });
+            })
+            ->orderByDesc('created_at');
+
+        $payments = $query->paginate($perPage)->appends($request->query());
+        $payments->getCollection()->transform(function ($payment) {
+            return [
+                'id' => $payment->id,
+                'payment_no' => $payment->payment_no,
+                'invoice_id' => $payment->invoice_id,
+                'invoice_no' => $payment->invoice?->invoice_no,
+                'customer_name' => $payment->invoice?->customer?->name,
+                'order_no' => $payment->invoice?->salesOrder?->order_no,
+                'amount' => (float) $payment->amount,
+                'payment_method' => $payment->payment_method,
+                'status' => $this->normalizeStatus($payment->invoice?->status ?? $payment->status) ?: 'Pending',
+                'paid_at' => $payment->updated_at,
+                'created_at' => $payment->created_at,
+            ];
+        });
+
+        return response()->json($payments);
     }
 
     /**
@@ -143,5 +268,16 @@ class InvoiceController extends Controller
         $invoice->update(['status' => $request->status]);
 
         return response()->json(['success' => true, 'message' => 'Đã cập nhật trạng thái']);
+    }
+
+    private function normalizeStatus(?string $status): string
+    {
+        $raw = strtolower(trim((string) $status));
+
+        if ($raw === '' || $raw === 'all') {
+            return '';
+        }
+
+        return self::STATUS_MAP[$raw] ?? '';
     }
 }

@@ -41,15 +41,15 @@ function PriorityBadge({ priority }) {
 
   if (priority === "medium") {
     return (
-      <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
-        Trung binh
+        <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700">
+        Trung bình
       </span>
     );
   }
 
   return (
-    <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
-      Binh thuong
+      <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+      Bình thường
     </span>
   );
 }
@@ -73,7 +73,7 @@ function mapInvoiceToReceivable(invoice) {
   return {
     id: invoice.id,
     invoiceNo: invoice.invoice_no,
-    customerName: invoice.customer?.name || "Khach le",
+    customerName: invoice.customer?.name || "Khách lẻ",
     issueDate: invoice.created_at,
     dueDate,
     overdueDays,
@@ -97,7 +97,7 @@ function ReceivableListPage() {
   const [searchInput, setSearchInput] = useState("");
   const [filters, setFilters] = useState({
     search: "",
-    status: "Pending",
+    status: "all",
     aging: "all",
     priority: "all",
     page: 1,
@@ -119,7 +119,7 @@ function ReceivableListPage() {
       if (isRefresh) setRefreshing(true);
       else setLoading(true);
 
-      const response = await invoiceService.list({
+      const response = await invoiceService.listReceivables({
         search: currentFilters.search,
         status: currentFilters.status === "all" ? "" : currentFilters.status,
         page: currentFilters.page,
@@ -148,7 +148,7 @@ function ReceivableListPage() {
     } catch {
       setReceivables([]);
       setMeta(defaultMeta);
-      setError("Khong tai duoc danh sach cong no");
+      setError("Không tải được danh sách công nợ");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -161,8 +161,9 @@ function ReceivableListPage() {
   }, [filters.page, filters.status, filters.aging, filters.priority]);
 
   const stats = useMemo(() => {
+    const isPaid = (status) => String(status || "").toLowerCase() === "paid";
     const totalOutstanding = receivables
-      .filter((item) => item.status !== "Paid")
+      .filter((item) => !isPaid(item.status))
       .reduce((sum, item) => sum + item.amount, 0);
     const overdueCount = receivables.filter((item) => item.overdueDays > 0).length;
     const dueSoonCount = receivables.filter(
@@ -197,7 +198,7 @@ function ReceivableListPage() {
     setSelectedReceivable(receivable);
     setReminderForm({
       channel: "Email",
-      message: `Nhac thanh toan hoa don ${receivable.invoiceNo} - so tien ${formatCurrency(
+      message: `Nhắc thanh toán hóa đơn ${receivable.invoiceNo} - số tiền ${formatCurrency(
         receivable.amount
       )}.`,
     });
@@ -211,7 +212,7 @@ function ReceivableListPage() {
 
   const handleReminderSubmit = (event) => {
     event.preventDefault();
-    toast.success("Da tao nhac no (UI demo, chua goi API)");
+    toast.success("Đã tạo lịch nhắc nợ (UI demo, chưa gọi API)");
     closeReminder();
   };
 
@@ -221,10 +222,10 @@ function ReceivableListPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-800">
-              Cong no phai thu
+              Công nợ phải thu
             </h1>
             <p className="text-sm font-medium text-slate-500">
-              Quan ly hoa don chua thu tien, uu tien thu hoi va lich nhac no.
+              Quản lý hóa đơn chưa thu tiền, ưu tiên thu hồi và lịch nhắc nợ.
             </p>
           </div>
 
@@ -235,7 +236,7 @@ function ReceivableListPage() {
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Tong phai thu
+                  Tổng phải thu
                 </p>
                 <p className="text-sm font-bold text-slate-700">
                   {formatCurrency(stats.totalOutstanding)}
@@ -249,7 +250,7 @@ function ReceivableListPage() {
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Qua han
+                  Quá hạn
                 </p>
                 <p className="text-sm font-bold text-slate-700">
                   {stats.overdueCount} hoa don
@@ -263,7 +264,7 @@ function ReceivableListPage() {
               </div>
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  Den han gan
+                  Đến hạn gần
                 </p>
                 <p className="text-sm font-bold text-slate-700">
                   {stats.dueSoonCount} hoa don
@@ -283,7 +284,7 @@ function ReceivableListPage() {
                 type="text"
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Tim ma hoa don, khach hang..."
+                placeholder="Tìm mã hóa đơn, khách hàng..."
                 className="w-full border-none bg-transparent px-3 py-2.5 text-sm outline-none"
               />
             </div>
@@ -303,10 +304,10 @@ function ReceivableListPage() {
                 }
                 className="w-full bg-transparent py-2.5 text-sm outline-none"
               >
-                <option value="Pending">Cho thanh toan</option>
-                <option value="all">Tat ca trang thai</option>
-                <option value="Cancelled">Da huy</option>
-                <option value="Paid">Da thanh toan</option>
+                <option value="Pending">Chờ thanh toán</option>
+                <option value="all">Tất cả trạng thái</option>
+                <option value="Cancelled">Đã hủy</option>
+                <option value="Paid">Đã thanh toán</option>
               </select>
             </div>
           </div>
@@ -323,11 +324,11 @@ function ReceivableListPage() {
               }
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"
             >
-              <option value="all">Tuoi no: Tat ca</option>
-              <option value="current">Chua den han</option>
-              <option value="1_7">Qua han 1-7 ngay</option>
-              <option value="8_30">Qua han 8-30 ngay</option>
-              <option value="31_plus">Qua han tren 30 ngay</option>
+              <option value="all">Tuổi nợ: Tất cả</option>
+              <option value="current">Chưa đến hạn</option>
+              <option value="1_7">Quá hạn 1-7 ngày</option>
+              <option value="8_30">Quá hạn 8-30 ngày</option>
+              <option value="31_plus">Quá hạn trên 30 ngày</option>
             </select>
           </div>
 
@@ -343,10 +344,10 @@ function ReceivableListPage() {
               }
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"
             >
-              <option value="all">Uu tien: Tat ca</option>
+              <option value="all">Ưu tiên: Tất cả</option>
               <option value="high">Cao</option>
-              <option value="medium">Trung binh</option>
-              <option value="normal">Binh thuong</option>
+              <option value="medium">Trung bình</option>
+              <option value="normal">Bình thường</option>
             </select>
           </div>
 
@@ -357,7 +358,7 @@ function ReceivableListPage() {
               className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-900"
             >
               <FiSearch />
-              Tim
+              Tìm
             </button>
             <button
               type="button"
@@ -375,22 +376,22 @@ function ReceivableListPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="px-6 py-4">Ma Hoa Don</th>
-                <th className="px-6 py-4">Khach Hang</th>
-                <th className="px-6 py-4">Ngay Xuat</th>
-                <th className="px-6 py-4">Den Han</th>
-                <th className="px-6 py-4">Qua Han</th>
-                <th className="px-6 py-4">Gia Tri</th>
-                <th className="px-6 py-4">Uu Tien</th>
-                <th className="px-6 py-4">Trang Thai</th>
-                <th className="px-6 py-4 text-center">Nhac No</th>
+                <th className="px-6 py-4">Mã hóa đơn</th>
+                <th className="px-6 py-4">Khách hàng</th>
+                <th className="px-6 py-4">Ngày xuất</th>
+                <th className="px-6 py-4">Đến hạn</th>
+                <th className="px-6 py-4">Quá hạn</th>
+                <th className="px-6 py-4">Giá trị</th>
+                <th className="px-6 py-4">Ưu tiên</th>
+                <th className="px-6 py-4">Trạng thái</th>
+                <th className="px-6 py-4 text-center">Nhắc nợ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
                   <td colSpan="9" className="py-20 text-center text-slate-400">
-                    Dang tai du lieu cong no...
+                    Đang tải dữ liệu công nợ...
                   </td>
                 </tr>
               ) : error ? (
@@ -423,10 +424,10 @@ function ReceivableListPage() {
                         }`}
                       >
                         {item.overdueDays > 0
-                          ? `+${item.overdueDays} ngay`
+                          ? `+${item.overdueDays} ngày`
                           : item.overdueDays === 0
-                          ? "Den han"
-                          : `${item.overdueDays} ngay`}
+                          ? "Đến hạn"
+                          : `${item.overdueDays} ngày`}
                       </span>
                     </td>
                     <td className="px-6 py-4 font-semibold text-slate-800">
@@ -444,12 +445,12 @@ function ReceivableListPage() {
                         onClick={() =>
                           canRemind
                             ? openReminder(item)
-                            : toast.error("Ban khong co quyen thao tac")
+                            : toast.error("Bạn không có quyền thao tác")
                         }
                         className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
                       >
                         <FiBell />
-                        Nhac
+                        Nhắc
                       </button>
                     </td>
                   </tr>
@@ -457,7 +458,7 @@ function ReceivableListPage() {
               ) : (
                 <tr>
                   <td colSpan="9" className="py-20 text-center text-slate-400">
-                    Khong co cong no phu hop
+                    Không có công nợ phù hợp
                   </td>
                 </tr>
               )}
@@ -467,7 +468,7 @@ function ReceivableListPage() {
 
         <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/40 px-6 py-4">
           <p className="text-xs font-semibold text-slate-500">
-            Trang {meta.current_page} / {meta.last_page} - Tong {meta.total} ban
+            Trang {meta.current_page} / {meta.last_page} - Tổng {meta.total} bản
             ghi
           </p>
           <div className="flex gap-2">
@@ -480,7 +481,7 @@ function ReceivableListPage() {
               className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
             >
               <FiChevronLeft />
-              Truoc
+              Trước
             </button>
             <button
               type="button"
@@ -503,10 +504,10 @@ function ReceivableListPage() {
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-800">
-                  Tao lich nhac no
+                  Tạo lịch nhắc nợ
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Hoa don {selectedReceivable.invoiceNo} -{" "}
+                  Hóa đơn {selectedReceivable.invoiceNo} -{" "}
                   {selectedReceivable.customerName}
                 </p>
               </div>
@@ -515,14 +516,14 @@ function ReceivableListPage() {
                 onClick={closeReminder}
                 className="rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
               >
-                Dong
+                Đóng
               </button>
             </div>
 
             <form onSubmit={handleReminderSubmit} className="space-y-4 p-5">
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Kenh nhac no
+                  Kênh nhắc nợ
                 </label>
                 <select
                   value={reminderForm.channel}
@@ -536,13 +537,13 @@ function ReceivableListPage() {
                 >
                   <option>Email</option>
                   <option>SMS</option>
-                  <option>Dien thoai</option>
+                  <option>Điện thoại</option>
                 </select>
               </div>
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                  Noi dung
+                  Nội dung
                 </label>
                 <textarea
                   rows={4}
@@ -563,13 +564,13 @@ function ReceivableListPage() {
                   onClick={closeReminder}
                   className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
                 >
-                  Huy
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   className="rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700"
                 >
-                  Luu lich nhac
+                  Lưu lịch nhắc
                 </button>
               </div>
             </form>
