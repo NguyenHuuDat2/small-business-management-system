@@ -8,7 +8,7 @@ use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\Hr\EmployeeController as HrEmployeeController;
 use App\Http\Controllers\Api\Hr\DashboardController as HrDashboardController;
 
-// auth
+//auth
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
@@ -22,10 +22,10 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware(['auth:sanctum', 'admin'])->apiResource('users', UserController::class);
 
-// role
+//role
 Route::middleware(['auth:sanctum', 'admin'])->get('/roles', [RoleController::class, 'index']);
 
-// hr
+//hr
 Route::prefix('hr')->middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', [HrDashboardController::class, 'index']);
 
@@ -38,13 +38,11 @@ Route::prefix('hr')->middleware('auth:sanctum')->group(function () {
     Route::get('/department-options', [HrEmployeeController::class, 'departmentOptions']);
 });
 
-// accounting
+//accounting
 Route::prefix('accounting')->group(function () {
-    Route::get('/invoices', [InvoiceController::class, 'index']);
-    Route::post('/invoices', [InvoiceController::class, 'store']);
-    Route::get('/invoices/{id}', [InvoiceController::class, 'show']);
-    Route::patch('/invoices/{id}/status', [InvoiceController::class, 'updateStatus']);
-
-    Route::get('/receivables', [InvoiceController::class, 'receivables']);
-    Route::get('/payments', [InvoiceController::class, 'payments']);
+    // Quản lý hóa đơn (Invoice)
+    Route::get('/invoices', [InvoiceController::class, 'index']);          // Danh sách hóa đơn
+    Route::post('/invoices', [InvoiceController::class, 'store']);         // Lập hóa đơn mới
+    Route::get('/invoices/{id}', [InvoiceController::class, 'show']);      // Chi tiết hóa đơn
+    // Bạn có thể thêm các route như update status, thanh toán tại đây
 });

@@ -38,47 +38,8 @@ export const pageRegistry = {
   "accounting.invoices.index": InvoiceListPage,
   "accounting.payments.index": PaymentListPage,
   "accounting.receivables.index": ReceivableListPage,
-
-  // Backward-compatible aliases for older menu seeds
-  "accounting.dashboard": AccountingDashboardPage,
-  "accounting.invoice.index": InvoiceListPage,
-  "accounting.payment.index": PaymentListPage,
-  "accounting.receivable.index": ReceivableListPage,
 };
-
-const permissionRegistry = {
-  "accounting.dashboard.view": AccountingDashboardPage,
-  "accounting.invoices.view": InvoiceListPage,
-  "accounting.payments.view": PaymentListPage,
-  "accounting.receivables.view": ReceivableListPage,
-};
-
-const pathRegistry = {
-  "/accounting/dashboard": AccountingDashboardPage,
-  "/accounting/invoices": InvoiceListPage,
-  "/accounting/payments": PaymentListPage,
-  "/accounting/receivables": ReceivableListPage,
-};
-
-function normalizeKey(value) {
-  return String(value || "").trim().toLowerCase();
-}
-
-function normalizePath(path) {
-  const normalized = String(path || "").trim();
-  if (!normalized) return "";
-  return normalized.replace(/\/+$/, "").toLowerCase();
-}
 
 export function resolvePageComponent(menu) {
-  const pageCode = normalizeKey(menu?.page_code);
-  const permissionKey = normalizeKey(menu?.permission_key);
-  const path = normalizePath(menu?.path);
-
-  return (
-    pageRegistry[pageCode] ||
-    permissionRegistry[permissionKey] ||
-    pathRegistry[path] ||
-    PlaceholderPage
-  );
+  return pageRegistry[menu?.page_code] || PlaceholderPage;
 }
