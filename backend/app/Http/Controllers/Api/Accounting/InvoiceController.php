@@ -4,144 +4,194 @@ namespace App\Http\Controllers\Api\Accounting;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
+use App\Models\SalesOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class InvoiceController extends Controller
 {
-    /**
-     * Lấy danh sách hóa đơn (Dùng cho Table List)
-     * URL: GET /api/accounting/invoices
-     */
     public function index(Request $request)
     {
-        $query = Invoice::with(['customer:id,name', 'salesOrder:id,order_no']);
+        $q = trim((string) $request->get('q', ''));
+        $status = trim((string) $request->get('status', ''));
+        $perPage = (int) $request->get('per_page', 10);
+        $perPage = max(1, min($perPage, 50));
 
-        // Filter search
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->search) {
-            $query->where('invoice_no', 'like', "%{$request->search}%");
-        }
-
-        $invoices = $query->orderBy('created_at', 'desc')
-                          ->paginate($request->per_page ?? 15);
-        
-        return response()->json($invoices);
-    }
-
-    /**
-     * Xem chi tiết hóa đơn (Dùng để Render giao diện In/Xem chi tiết)
-     * URL: GET /api/accounting/invoices/{id}
-     */
-    public function show($id)
-    {
-        try {
-            $invoice = Invoice::with([
-                'customer', 
-                'salesOrder', 
-                'invoiceItems.product.unit' // Lấy tới tận Đơn vị tính
-            ])->findOrFail($id);
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'header' => [
-                        'invoice_id'   => $invoice->id,
-                        'invoice_no'   => $invoice->invoice_no,
-                        'status'       => $invoice->status,
-                        'order_no'     => $invoice->salesOrder->order_no ?? 'N/A',
-                        'created_at'   => $invoice->created_at->format('d/m/Y H:i'),
-                        'customer' => [
-                            'name'    => $invoice->customer->name ?? 'Khách lẻ',
-                            'phone'   => $invoice->customer->phone ?? '',
-                            'address' => $invoice->customer->address ?? '',
-                        ]
-                    ],
-                    'items' => $invoice->invoiceItems->map(fn($item) => [
-                        'product_name' => $item->product->name ?? 'Sản phẩm đã xóa',
-                        'product_code' => $item->product->product_code ?? '',
-                        'unit'         => $item->product->unit->name ?? 'Cái',
-                        'quantity'     => (float) $item->quantity,
-                        'price'        => (float) $item->price,
-                        'subtotal'     => (float) $item->subtotal,
-                    ]),
-                    'summary' => [
-                        'total_amount' => (float) $invoice->total_amount,
-                        'total_tax'    => 0, // Sơn có thể thêm logic thuế sau này
-                        'final_total'  => (float) $invoice->total_amount,
-                    ]
-                ]
+        $query = Invoice::query()
+            ->from('invoices as i')
+            ->leftJoin('customers as c', 'i.customer_id', '=', 'c.id')
+            ->leftJoin('sales_orders as so', 'i.sales_order_id', '=', 'so.id')
+            ->select([
+                'i.id',
+                'i.invoice_no',
+                'i.sales_order_id',
+                'i.customer_id',
+                'i.total_amount',
+                'i.status',
+                'i.created_at',
+                'c.customer_code',
+                'c.name as customer_name',
+                'c.phone as customer_phone',
+                'so.order_no',
+                DB::raw('(SELECT COALESCE(SUM(p.amount), 0) FROM payments p WHERE p.invoice_id = i.id AND p.status = "paid") as paid_amount'),
             ]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Không tìm thấy hóa đơn'], 404);
+
+        if ($q !== '') {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('i.invoice_no', 'like', "%{$q}%")
+                    ->orWhere('c.name', 'like', "%{$q}%")
+                    ->orWhere('c.customer_code', 'like', "%{$q}%")
+                    ->orWhere('so.order_no', 'like', "%{$q}%");
+            });
         }
+
+        if ($status !== '') {
+            $query->where('i.status', $status);
+        }
+
+        $data = $query
+            ->orderByDesc('i.id')
+            ->paginate($perPage);
+
+        $data->getCollection()->transform(function ($row) {
+            $total = (float) ($row->total_amount ?? 0);
+            $paid = (float) ($row->paid_amount ?? 0);
+            $row->balance_amount = max(0, $total - $paid);
+            return $row;
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
     }
 
-    /**
-     * Tạo hóa đơn mới
-     * URL: POST /api/accounting/invoices
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'customer_id'        => 'required|exists:customers,id',
-            'sales_order_id'     => 'nullable|exists:sales_orders,id',
-            'items'              => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity'   => 'required|numeric|min:0.1',
-            'items.*.price'      => 'required|numeric|min:0',
+            'sales_order_id' => ['required', 'integer', Rule::exists('sales_orders', 'id')],
+            'customer_id' => ['required', 'integer', Rule::exists('customers', 'id')],
+            'total_amount' => ['required', 'numeric', 'min:0'],
+            'status' => ['nullable', 'string', Rule::in(['draft', 'issued', 'partial', 'paid', 'overdue', 'cancelled'])],
         ]);
 
-        return DB::transaction(function () use ($validated) {
-            // Logic tạo số hóa đơn INV-YYYYMMDD-STT
-            $todayCount = Invoice::whereDate('created_at', today())->count() + 1;
-            $invoiceNo = 'INV-' . date('Ymd') . '-' . str_pad($todayCount, 3, '0', STR_PAD_LEFT);
+        $salesOrder = SalesOrder::find($validated['sales_order_id']);
 
-            $invoice = Invoice::create([
-                'invoice_no'     => $invoiceNo,
-                'customer_id'    => $validated['customer_id'],
-                'sales_order_id' => $validated['sales_order_id'],
-                'total_amount'   => 0,
-                'status'         => 'Pending',
-            ]);
-
-            $totalAmount = 0;
-            foreach ($validated['items'] as $item) {
-                $subtotal = $item['quantity'] * $item['price'];
-                $invoice->invoiceItems()->create([
-                    'product_id' => $item['product_id'],
-                    'quantity'   => $item['quantity'],
-                    'price'      => $item['price'],
-                    'subtotal'   => $subtotal,
-                ]);
-                $totalAmount += $subtotal;
-            }
-
-            $invoice->update(['total_amount' => $totalAmount]);
-
+        if (! $salesOrder) {
             return response()->json([
-                'success' => true,
-                'message' => 'Lập hóa đơn thành công',
-                'id'      => $invoice->id
-            ], 201);
-        });
+                'success' => false,
+                'message' => 'Không tìm thấy đơn bán hàng.',
+            ], 404);
+        }
+
+        if ((int) $salesOrder->customer_id !== (int) $validated['customer_id']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khách hàng không khớp với đơn bán hàng đã chọn.',
+            ], 422);
+        }
+
+        $invoice = Invoice::create([
+            'invoice_no' => $this->generateInvoiceNo(),
+            'sales_order_id' => $validated['sales_order_id'],
+            'customer_id' => $validated['customer_id'],
+            'total_amount' => $validated['total_amount'],
+            'status' => $validated['status'] ?? 'issued',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tạo hóa đơn thành công.',
+            'data' => $invoice,
+        ], 201);
     }
 
-    /**
-     * Cập nhật trạng thái hóa đơn (Thanh toán/Hủy)
-     * URL: PATCH /api/accounting/invoices/{id}/status
-     */
-    public function updateStatus(Request $request, $id)
+    public function update(Request $request, int $id)
     {
-        $request->validate(['status' => 'required|in:Pending,Paid,Cancelled']);
-        
-        $invoice = Invoice::findOrFail($id);
-        $invoice->update(['status' => $request->status]);
+        $invoice = Invoice::find($id);
 
-        return response()->json(['success' => true, 'message' => 'Đã cập nhật trạng thái']);
+        if (! $invoice) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy hóa đơn.',
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'sales_order_id' => ['required', 'integer', Rule::exists('sales_orders', 'id')],
+            'customer_id' => ['required', 'integer', Rule::exists('customers', 'id')],
+            'total_amount' => ['required', 'numeric', 'min:0'],
+            'status' => ['nullable', 'string', Rule::in(['draft', 'issued', 'partial', 'paid', 'overdue', 'cancelled'])],
+        ]);
+
+        $salesOrder = SalesOrder::find($validated['sales_order_id']);
+
+        if (! $salesOrder) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy đơn bán hàng.',
+            ], 404);
+        }
+
+        if ((int) $salesOrder->customer_id !== (int) $validated['customer_id']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Khách hàng không khớp với đơn bán hàng đã chọn.',
+            ], 422);
+        }
+
+        $invoice->update([
+            'sales_order_id' => $validated['sales_order_id'],
+            'customer_id' => $validated['customer_id'],
+            'total_amount' => $validated['total_amount'],
+            'status' => $validated['status'] ?? $invoice->status,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cập nhật hóa đơn thành công.',
+            'data' => $invoice,
+        ]);
+    }
+
+    public function destroy(int $id)
+    {
+        $invoice = Invoice::find($id);
+
+        if (! $invoice) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy hóa đơn.',
+            ], 404);
+        }
+
+        try {
+            $invoice->delete();
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể xóa hóa đơn đã phát sinh thanh toán.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Xóa hóa đơn thành công.',
+        ]);
+    }
+
+    protected function generateInvoiceNo(): string
+    {
+        $latestId = Invoice::max('id') ?? 0;
+        $next = $latestId + 1;
+
+        do {
+            $code = 'INV' . str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+            $exists = Invoice::where('invoice_no', $code)->exists();
+            $next++;
+        } while ($exists);
+
+        return $code;
     }
 }

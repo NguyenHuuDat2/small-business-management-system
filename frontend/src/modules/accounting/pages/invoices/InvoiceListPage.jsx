@@ -1,295 +1,519 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import {
+  FiEdit2,
+  FiFileText,
   FiPlus,
   FiRefreshCw,
   FiSearch,
-  FiEdit2,
-  FiChevronLeft,
-  FiChevronRight,
-  FiFileText,
-  FiCheckCircle,
-  FiClock,
-  FiXCircle,
-  FiEye,
-  FiFilter
+  FiTrash2,
+  FiX,
 } from "react-icons/fi";
-import invoiceService from "../../services/invoiceService";
-import { useAuth } from "../../../../context/AuthContext";
 
-// 1. Import Modal chi tiết
-import InvoiceDetailModal from "./components/InvoiceDetailModal";
+import { invoiceService } from "../../services/invoiceService";
+import { accountingReferenceService } from "../../services/accountingReferenceService";
 
-/**
- * Helper: Định dạng tiền tệ từ String/Number sang VND
- */
-const formatCurrency = (value) => {
-  const number = Number(value || 0);
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-  }).format(number);
-};
+function formatCurrency(value) {
+  return new Intl.NumberFormat("vi-VN").format(Number(value || 0));
+}
 
-/**
- * Component hiển thị Badge trạng thái dựa trên field 'status' của API
- */
-const StatusBadge = ({ status }) => {
-  const statusMap = {
-    Paid: { label: "Đã thanh toán", class: "bg-emerald-100 text-emerald-700", icon: <FiCheckCircle /> },
-    Pending: { label: "Chờ thanh toán", class: "bg-amber-100 text-amber-700", icon: <FiClock /> },
-    Cancelled: { label: "Đã hủy", class: "bg-rose-100 text-rose-700", icon: <FiXCircle /> },
-  };
-  const current = statusMap[status] || statusMap.Pending;
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${current.class}`}>
-      {current.icon}
-      {current.label}
-    </span>
-  );
-};
+function InvoiceFormModal({
+  open,
+  onClose,
+  onSubmit,
+  initialData,
+  submitting,
+  customers,
+  salesOrders,
+}) {
+  const isEdit = !!initialData?.id;
 
-function InvoiceListPage() {
-  const { hasPermission } = useAuth();
-
-  // Kiểm tra quyền (Sơn có thể điều chỉnh slug phù hợp với DB)
-  const canCreate = hasPermission("accounting.invoices.create");
-  const canUpdate = hasPermission("accounting.invoices.update");
-
-  // State dữ liệu và UI
-  const [invoices, setInvoices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
-
-  // State quản lý Modal chi tiết
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // State phân trang và lọc
-  const [meta, setMeta] = useState({
-    current_page: 1,
-    last_page: 1,
-    per_page: 15,
-    total: 0,
+  const getInitialForm = () => ({
+    customer_id: initialData?.customer_id ? String(initialData.customer_id) : "",
+    sales_order_id: initialData?.sales_order_id ? String(initialData.sales_order_id) : "",
+    total_amount:
+      initialData?.total_amount !== null && initialData?.total_amount !== undefined
+        ? String(initialData.total_amount)
+        : "",
+    status: initialData?.status || "issued",
   });
 
-  const [filters, setFilters] = useState({
-    search: "",
-    status: "",
-    page: 1,
-  });
+  const [form, setForm] = useState(getInitialForm);
 
-  // Tính toán thống kê nhanh từ dữ liệu hiện tại trên trang
-  const stats = useMemo(() => {
-    return {
-      totalAmountOnPage: invoices.reduce((sum, inv) => sum + Number(inv.total_amount), 0),
-    };
-  }, [invoices]);
+  if (!open) return null;
 
-  /**
-   * Hàm gọi API load dữ liệu
-   */
-  const fetchInvoices = async (currentFilters = filters, isRefresh = false) => {
-    try {
-      isRefresh ? setRefreshing(true) : setLoading(true);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
 
-      const response = await invoiceService.list(currentFilters);
-      
-      // Bóc tách dữ liệu từ cấu trúc Paginator của Laravel
-      const { data, current_page, last_page, per_page, total } = response.data;
+    if (name === "sales_order_id") {
+      const selected = salesOrders.find((item) => String(item.id) === value);
 
-      setInvoices(data || []);
-      setMeta({ 
-        current_page: current_page || 1, 
-        last_page: last_page || 1, 
-        per_page: per_page || 15, 
-        total: total || 0 
-      });
-    } catch (err) {
-      toast.error("Không thể tải danh sách hóa đơn từ máy chủ");
-      console.error("API Error:", err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (selected) {
+        setForm((prev) => ({
+          ...prev,
+          sales_order_id: value,
+          customer_id: String(selected.customer_id || ""),
+          total_amount: String(selected.total_amount || ""),
+        }));
+      }
     }
   };
 
-  // Tự động fetch khi thay đổi trang hoặc filter trạng thái
-  useEffect(() => {
-    fetchInvoices(filters);
-  }, [filters.page, filters.status]);
-
-  const handleSearchSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setFilters(prev => ({ ...prev, search: searchInput.trim(), page: 1 }));
-  };
-
-  const handleRefresh = () => fetchInvoices(filters, true);
-
-  // Hàm xử lý mở chi tiết
-  const handleOpenDetail = (invoice) => {
-    setSelectedInvoice(invoice);
-    setIsModalOpen(true);
+    onSubmit(form);
   };
 
   return (
-    <div className="space-y-4">
-      {/* --- Section 1: Tiêu đề & Thống kê --- */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4">
+      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Hóa đơn bán hàng</h1>
-            <p className="text-sm text-slate-500 font-medium">Quản lý hóa đơn kế toán và theo dõi dòng tiền.</p>
+            <h3 className="text-lg font-semibold text-slate-900">
+              {isEdit ? "Cập nhật hóa đơn" : "Tạo hóa đơn"}
+            </h3>
+            <p className="text-sm text-slate-500">
+              Chọn đơn bán hàng và kiểm tra thông tin trước khi phát hành hóa đơn.
+            </p>
           </div>
-          
-          <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2">
-              <div className="rounded-lg bg-sky-100 p-2 text-sky-600"><FiFileText size={18}/></div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Tổng số</p>
-                <p className="text-sm font-bold text-slate-700">{meta.total} HĐ</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-2">
-              <div className="rounded-lg bg-emerald-100 p-2 text-emerald-600 font-bold">₫</div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Tổng tiền trang</p>
-                <p className="text-sm font-bold text-slate-700">{formatCurrency(stats.totalAmountOnPage)}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* --- Section 2: Bộ lọc & Thao tác --- */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 lg:grid-cols-12">
-          <form onSubmit={handleSearchSubmit} className="lg:col-span-6">
-            <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 px-3 focus-within:bg-white focus-within:ring-2 focus-within:ring-teal-500/20 transition-all">
-              <FiSearch className="text-slate-400" />
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <FiX />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5 px-6 py-5">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Khách hàng
+              </label>
+              <select
+                name="customer_id"
+                value={form.customer_id}
+                onChange={handleChange}
+                required
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              >
+                <option value="">Chọn khách hàng</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.customer_code} - {customer.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Đơn bán hàng
+              </label>
+              <select
+                name="sales_order_id"
+                value={form.sales_order_id}
+                onChange={handleChange}
+                required
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+              >
+                <option value="">Chọn đơn bán hàng</option>
+                {salesOrders.map((order) => (
+                  <option key={order.id} value={order.id}>
+                    {order.order_no} - {formatCurrency(order.total_amount)}đ
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Tổng tiền hóa đơn
+              </label>
               <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Tìm mã hóa đơn, tên khách hàng..."
-                className="w-full border-none bg-transparent px-3 py-2.5 text-sm outline-none"
+                name="total_amount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.total_amount}
+                onChange={handleChange}
+                required
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+                placeholder="Nhập tổng tiền"
               />
             </div>
-          </form>
 
-          <div className="lg:col-span-3">
-            <div className="flex items-center rounded-xl border border-slate-200 px-3">
-              <FiFilter className="text-slate-400 mr-2" />
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700">
+                Trạng thái
+              </label>
               <select
-                value={filters.status}
-                onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value, page: 1 }))}
-                className="w-full bg-transparent py-2.5 text-sm outline-none cursor-pointer"
+                name="status"
+                value={form.status}
+                onChange={handleChange}
+                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="Paid">Đã thanh toán</option>
-                <option value="Pending">Chờ thanh toán</option>
-                <option value="Cancelled">Đã hủy</option>
+                <option value="draft">Nháp</option>
+                <option value="issued">Đã phát hành</option>
+                <option value="partial">Thu một phần</option>
+                <option value="paid">Đã thu đủ</option>
+                <option value="overdue">Quá hạn</option>
+                <option value="cancelled">Đã hủy</option>
               </select>
             </div>
           </div>
 
-          <div className="flex gap-2 lg:col-span-3">
-            <button onClick={handleRefresh} className="flex flex-1 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-colors">
-              <FiRefreshCw className={refreshing ? "animate-spin" : ""} />
+          <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              Hủy
             </button>
-            {canCreate && (
-              <button className="flex-[3] flex items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 shadow-md shadow-teal-100 transition-all active:scale-95">
-                <FiPlus /> Lập hóa đơn
-              </button>
-            )}
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded-xl bg-teal-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-teal-700 disabled:opacity-60"
+            >
+              {submitting ? "Đang xử lý..." : isEdit ? "Lưu cập nhật" : "Tạo hóa đơn"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function InvoiceListPage() {
+  const [keyword, setKeyword] = useState("");
+  const [debouncedKeyword, setDebouncedKeyword] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [page, setPage] = useState(1);
+
+  const [data, setData] = useState({
+    data: [],
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+  });
+
+  const [customers, setCustomers] = useState([]);
+  const [salesOrders, setSalesOrders] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState(null);
+  const [modalSeed, setModalSeed] = useState(0);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDebouncedKeyword(keyword.trim());
+      setPage(1);
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [keyword]);
+
+  const params = useMemo(
+    () => ({
+      q: debouncedKeyword,
+      status: statusFilter,
+      page,
+      per_page: 10,
+    }),
+    [debouncedKeyword, statusFilter, page]
+  );
+
+  const loadReferences = async () => {
+    try {
+      const [customerResponse, salesOrderResponse] = await Promise.all([
+        accountingReferenceService.getCustomers({ limit: 100 }),
+        accountingReferenceService.getSalesOrders({ limit: 100 }),
+      ]);
+
+      setCustomers(customerResponse?.data || []);
+      setSalesOrders(salesOrderResponse?.data || []);
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Không thể tải dữ liệu tham chiếu hóa đơn"
+      );
+    }
+  };
+
+  const fetchInvoices = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const response = await invoiceService.getList(params);
+      setData(response?.data || {});
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || error?.message || "Không thể tải danh sách hóa đơn"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [params]);
+
+  useEffect(() => {
+    fetchInvoices();
+  }, [fetchInvoices]);
+
+  useEffect(() => {
+    loadReferences();
+  }, []);
+
+  const openCreateModal = () => {
+    setEditingInvoice(null);
+    setModalSeed((prev) => prev + 1);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (invoice) => {
+    setEditingInvoice(invoice);
+    setModalSeed((prev) => prev + 1);
+    setModalOpen(true);
+  };
+
+  const handleSubmitForm = async (form) => {
+    setSubmitting(true);
+
+    const payload = {
+      customer_id: Number(form.customer_id),
+      sales_order_id: Number(form.sales_order_id),
+      total_amount: Number(form.total_amount || 0),
+      status: form.status,
+    };
+
+    try {
+      if (editingInvoice?.id) {
+        await invoiceService.update(editingInvoice.id, payload);
+        toast.success("Cập nhật hóa đơn thành công");
+      } else {
+        await invoiceService.create(payload);
+        toast.success("Tạo hóa đơn thành công");
+      }
+
+      setModalOpen(false);
+      setEditingInvoice(null);
+      fetchInvoices();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error?.message || "Không thể lưu hóa đơn");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteInvoice = async (invoice) => {
+    const confirmed = window.confirm(
+      `Bạn có chắc muốn xóa hóa đơn "${invoice.invoice_no}" không?`
+    );
+    if (!confirmed) return;
+
+    try {
+      await invoiceService.remove(invoice.id);
+      toast.success("Xóa hóa đơn thành công");
+
+      const nextPage =
+        (data?.data || []).length === 1 && (data?.current_page || 1) > 1
+          ? (data?.current_page || 1) - 1
+          : data?.current_page || 1;
+
+      setPage(nextPage);
+      fetchInvoices();
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error?.message || "Xóa hóa đơn thất bại");
+    }
+  };
+
+  const invoices = data?.data || [];
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="rounded-2xl bg-teal-50 p-3 text-teal-600">
+              <FiFileText size={22} />
+            </div>
+
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Hóa đơn</h1>
+              <p className="mt-1 text-sm text-slate-500">
+                Quản lý phát hành hóa đơn và theo dõi tình trạng thu tiền.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={fetchInvoices}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              <FiRefreshCw />
+              Làm mới
+            </button>
+
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-teal-700"
+            >
+              <FiPlus />
+              Tạo hóa đơn
+            </button>
           </div>
         </div>
       </div>
 
-      {/* --- Section 3: Bảng dữ liệu --- */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500 uppercase text-[11px] font-bold tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Mã Hóa Đơn</th>
-                <th className="px-6 py-4">Khách Hàng</th>
-                <th className="px-6 py-4">Đơn Hàng</th>
-                <th className="px-6 py-4">Tổng Tiền</th>
-                <th className="px-6 py-4">Ngày Xuất</th>
-                <th className="px-6 py-4">Trạng Thái</th>
-                <th className="px-6 py-4 text-center">Thao Tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr><td colSpan="7" className="py-20 text-center text-slate-400 font-medium">Đang tải dữ liệu hóa đơn...</td></tr>
-              ) : invoices.length > 0 ? (
-                invoices.map((inv) => (
-                  <tr key={inv.id} className="group hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-teal-600">{inv.invoice_no}</td>
-                    <td className="px-6 py-4 font-semibold text-slate-700">{inv.customer?.name || "Khách lẻ"}</td>
-                    <td className="px-6 py-4 text-slate-500">{inv.sales_order?.order_no || "-"}</td>
-                    <td className="px-6 py-4 font-bold text-slate-900">{formatCurrency(inv.total_amount)}</td>
-                    <td className="px-6 py-4 text-slate-500">{new Date(inv.created_at).toLocaleDateString('vi-VN')}</td>
-                    <td className="px-6 py-4"><StatusBadge status={inv.status} /></td>
-                    <td className="px-6 py-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="relative md:col-span-2">
+            <FiSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="Tìm theo mã hóa đơn, mã đơn hàng, tên khách hàng..."
+              className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+            />
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-100"
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="draft">Nháp</option>
+            <option value="issued">Đã phát hành</option>
+            <option value="partial">Thu một phần</option>
+            <option value="paid">Đã thu đủ</option>
+            <option value="overdue">Quá hạn</option>
+            <option value="cancelled">Đã hủy</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <div className="text-sm text-slate-600">
+            Tổng hóa đơn: <span className="font-semibold text-slate-900">{data?.total || 0}</span>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="px-5 py-10 text-center text-sm text-slate-500">Đang tải danh sách hóa đơn...</div>
+        ) : invoices.length === 0 ? (
+          <div className="px-5 py-10 text-center text-sm text-slate-500">Không có hóa đơn phù hợp.</div>
+        ) : (
+          <div className="overflow-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-50 text-left text-slate-600">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Mã hóa đơn</th>
+                  <th className="px-4 py-3 font-semibold">Đơn hàng</th>
+                  <th className="px-4 py-3 font-semibold">Khách hàng</th>
+                  <th className="px-4 py-3 font-semibold text-right">Tổng tiền</th>
+                  <th className="px-4 py-3 font-semibold text-right">Đã thu</th>
+                  <th className="px-4 py-3 font-semibold text-right">Còn lại</th>
+                  <th className="px-4 py-3 font-semibold">Trạng thái</th>
+                  <th className="px-4 py-3 font-semibold text-center">Thao tác</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {invoices.map((invoice) => (
+                  <tr key={invoice.id} className="border-t border-slate-100">
+                    <td className="px-4 py-4 font-medium text-slate-700">{invoice.invoice_no}</td>
+                    <td className="px-4 py-4 text-slate-600">{invoice.order_no || "-"}</td>
+                    <td className="px-4 py-4 text-slate-700">{invoice.customer_name || "-"}</td>
+                    <td className="px-4 py-4 text-right text-slate-700">
+                      {formatCurrency(invoice.total_amount)}đ
+                    </td>
+                    <td className="px-4 py-4 text-right text-emerald-700">
+                      {formatCurrency(invoice.paid_amount)}đ
+                    </td>
+                    <td className="px-4 py-4 text-right text-rose-700">
+                      {formatCurrency(invoice.balance_amount)}đ
+                    </td>
+                    <td className="px-4 py-4 text-slate-600">{invoice.status}</td>
+                    <td className="px-4 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        {/* Nút Xem Chi Tiết */}
-                        <button 
-                          onClick={() => handleOpenDetail(inv)}
-                          className="rounded-lg p-2 text-slate-400 hover:bg-white hover:text-blue-600 hover:shadow-sm transition-all border border-transparent hover:border-slate-100"
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(invoice)}
+                          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
                         >
-                          <FiEye size={18} />
+                          <FiEdit2 />
+                          Sửa
                         </button>
-                        
-                        {/* Nút Chỉnh Sửa */}
-                        {canUpdate && inv.status !== 'Paid' && (
-                          <button className="rounded-lg p-2 text-slate-400 hover:bg-white hover:text-teal-600 hover:shadow-sm transition-all border border-transparent hover:border-slate-100">
-                            <FiEdit2 size={18} />
-                          </button>
-                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteInvoice(invoice)}
+                          className="inline-flex items-center gap-2 rounded-lg border border-rose-200 px-3 py-2 text-xs font-medium text-rose-700 transition hover:bg-rose-50"
+                        >
+                          <FiTrash2 />
+                          Xóa
+                        </button>
                       </div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr><td colSpan="7" className="py-20 text-center text-slate-400 font-medium">Không tìm thấy dữ liệu phù hợp</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-        {/* --- Section 4: Phân trang --- */}
-        <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50/30">
-          <p className="text-xs font-semibold text-slate-500">
-            Trang {meta.current_page} / {meta.last_page} — Tổng {meta.total} bản ghi
-          </p>
-          <div className="flex gap-2">
+        <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-slate-500">
+            Trang {data?.current_page || 1} / {data?.last_page || 1}
+          </div>
+
+          <div className="flex items-center gap-2">
             <button
-              onClick={() => setFilters(p => ({ ...p, page: p.page - 1 }))}
-              disabled={meta.current_page <= 1}
-              className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-all shadow-sm"
+              type="button"
+              disabled={(data?.current_page || 1) <= 1}
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <FiChevronLeft /> Trước
+              Trước
             </button>
+
             <button
-              onClick={() => setFilters(p => ({ ...p, page: p.page + 1 }))}
-              disabled={meta.current_page >= meta.last_page}
-              className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-all shadow-sm"
+              type="button"
+              disabled={(data?.current_page || 1) >= (data?.last_page || 1)}
+              onClick={() => setPage((prev) => Math.min(data?.last_page || 1, prev + 1))}
+              className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Sau <FiChevronRight />
+              Sau
             </button>
           </div>
         </div>
       </div>
 
-      {/* --- Section 5: Modal chi tiết --- */}
-      <InvoiceDetailModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        invoice={selectedInvoice}
+      <InvoiceFormModal
+        key={`${editingInvoice?.id || "new"}-${modalSeed}`}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleSubmitForm}
+        initialData={editingInvoice}
+        submitting={submitting}
+        customers={customers}
+        salesOrders={salesOrders}
       />
     </div>
   );

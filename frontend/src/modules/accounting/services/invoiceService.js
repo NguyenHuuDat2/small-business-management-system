@@ -1,36 +1,23 @@
 import axiosClient from "../../../shared/api/axiosClient";
 
-const invoiceService = {
-  // 1. Lấy danh sách hóa đơn (có hỗ trợ filter status, search, phân trang)
-  list(params = {}) {
-    return axiosClient.get("/accounting/invoices", { params });
+export const invoiceService = {
+  async getList(params = {}) {
+    const response = await axiosClient.get("/accounting/invoices", { params });
+    return response.data;
   },
 
-  // 2. Lấy chi tiết một hóa đơn (Dùng để render trang in hoặc xem chi tiết)
-  detail(id) {
-    return axiosClient.get(`/accounting/invoices/${id}`);
+  async create(payload) {
+    const response = await axiosClient.post("/accounting/invoices", payload);
+    return response.data;
   },
 
-  // 3. Tạo hóa đơn mới (Lập hóa đơn)
-  create(payload) {
-    return axiosClient.post("/accounting/invoices", payload);
+  async update(id, payload) {
+    const response = await axiosClient.put(`/accounting/invoices/${id}`, payload);
+    return response.data;
   },
 
-  // 4. Cập nhật thông tin hóa đơn (Nếu cần)
-  update(id, payload) {
-    return axiosClient.put(`/accounting/invoices/${id}`, payload);
+  async remove(id) {
+    const response = await axiosClient.delete(`/accounting/invoices/${id}`);
+    return response.data;
   },
-
-  // 5. Xóa hóa đơn
-  remove(id) {
-    return axiosClient.delete(`/accounting/invoices/${id}`);
-  },
-
-  // 6. Cập nhật trạng thái (Dùng cho nút Xác nhận thanh toán / Hủy hóa đơn)
-  // Route này tương ứng với hàm updateStatus mình viết trong Controller lúc nãy
-  updateStatus(id, status) {
-    return axiosClient.patch(`/accounting/invoices/${id}/status`, { status });
-  }
 };
-
-export default invoiceService;
