@@ -7,6 +7,7 @@ import {
   FiChevronRight,
 } from "react-icons/fi";
 import { useAuth } from "../../../context/AuthContext";
+import { normalizeMenuPath } from "../../../app/router/pageRegistry";
 
 function resolveIcon(iconName) {
   if (!iconName) return <FiCircle size={14} />;
@@ -18,7 +19,7 @@ function hasActiveChild(item, pathname) {
   if (!item?.children?.length) return false;
 
   return item.children.some((child) => {
-    if (child.path === pathname) return true;
+    if (normalizeMenuPath(child.path) === normalizeMenuPath(pathname)) return true;
     return hasActiveChild(child, pathname);
   });
 }
@@ -45,7 +46,8 @@ function SidebarItem({
   expandedItems,
   toggleItem,
 }) {
-  const isActive = item.path === pathname;
+  const normalizedItemPath = normalizeMenuPath(item.path);
+  const isActive = normalizedItemPath === normalizeMenuPath(pathname);
   const isParentActive = hasActiveChild(item, pathname);
   const hasChildren = item?.children?.length > 0;
   const isExpanded = expandedItems.has(item.id);
@@ -116,7 +118,7 @@ function SidebarItem({
 
   return (
     <li className={wrapperClass}>
-      <Link to={item.path || "#"} className={itemClass}>
+      <Link to={normalizedItemPath || "#"} className={itemClass}>
         <span
           className={`text-lg ${
             isActive ? "text-teal-200" : "text-slate-400"

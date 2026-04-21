@@ -2,13 +2,19 @@ import { Route } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "../../shared/components/ui/ProtectedRoute";
 import { flattenSidebar } from "../../shared/utils/menuTree";
-import { resolvePageComponent } from "./pageRegistry";
+import { normalizeMenuPath, resolvePageComponent } from "./pageRegistry";
 import PlaceholderPage from "../../shared/components/ui/PlaceholderPage";
 
 export function renderDynamicRoutes(sidebar = []) {
   const flatMenus = flattenSidebar(sidebar);
 
   return flatMenus.map((menu) => {
+    const normalizedPath = normalizeMenuPath(menu?.path);
+
+    if (!normalizedPath) {
+      return null;
+    }
+
     const PageComponent = resolvePageComponent(menu);
 
     const content =
@@ -20,8 +26,8 @@ export function renderDynamicRoutes(sidebar = []) {
 
     return (
       <Route
-        key={menu.path}
-        path={menu.path}
+        key={normalizedPath}
+        path={normalizedPath}
         element={
           <ProtectedRoute>
             <MainLayout>{content}</MainLayout>

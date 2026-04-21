@@ -82,20 +82,67 @@ const pathRegistry = {
   "/accounting/receivables": ReceivableListPage,
 };
 
-function normalizePath(path) {
-  if (!path || typeof path !== "string") return "";
-  if (path === "/") return "/";
-
-  return path.endsWith("/") ? path.slice(0, -1) : path;
+function normalizeText(value) {
+  if (typeof value !== "string") return "";
+  return value.trim().toLowerCase();
 }
 
+export function normalizeMenuPath(path) {
+  const normalized = normalizeText(path);
+
+  if (!normalized) return "";
+  if (normalized === "/") return "/";
+
+  const withLeadingSlash = normalized.startsWith("/")
+    ? normalized
+    : `/${normalized}`;
+
+  return withLeadingSlash.endsWith("/")
+    ? withLeadingSlash.slice(0, -1)
+    : withLeadingSlash;
+}
+
+function normalizePageCode(pageCode) {
+  const normalized = normalizeText(pageCode);
+  if (!normalized) return "";
+
+  return pageAliases[normalized] || normalized;
+}
+
+function pageCodeFromPermission(permissionKey) {
+  const normalized = normalizeText(permissionKey);
+  if (!normalized) return "";
+
+  if (normalized.endsWith(".view")) {
+    return normalized.replace(/\.view$/, ".index");
+  }
+
+  return "";
+}
+
+const normalizedPageRegistry = Object.fromEntries(
+  Object.entries(pageRegistry).map(([key, component]) => [
+    normalizeText(key),
+    component,
+  ])
+);
+
+const normalizedPathRegistry = Object.fromEntries(
+  Object.entries(pathRegistry).map(([key, component]) => [
+    normalizeMenuPath(key),
+    component,
+  ])
+);
+
 export function resolvePageComponent(menu) {
-  const pageCode = menu?.page_code || "";
-  const canonicalPageCode = pageAliases[pageCode] || pageCode;
+  const canonicalPageCode = normalizePageCode(menu?.page_code);
+  const fallbackPageCode = pageCodeFromPermission(menu?.permission_key);
+  const normalizedPath = normalizeMenuPath(menu?.path);
 
   return (
-    pageRegistry[canonicalPageCode] ||
-    pathRegistry[normalizePath(menu?.path)] ||
+    normalizedPageRegistry[canonicalPageCode] ||
+    normalizedPageRegistry[fallbackPageCode] ||
+    normalizedPathRegistry[normalizedPath] ||
     PlaceholderPage
   );
 }
