@@ -65,6 +65,10 @@ return [
         'icon'  => 'cube',
         'children' => [
             [
+            'label' => 'Danh mục sản phẩm',
+            'route' => 'admin.categories',
+            ],
+            [
                 'label' => 'Phiếu nhập',
                 'route' => 'admin.goods-receipts',
             ],

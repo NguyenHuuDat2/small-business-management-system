@@ -52,6 +52,26 @@ Route::prefix('admin')->group(function () {
         Route::get('/departments', DepartmentsIndex::class)
             ->name('admin.departments');
 
+<<<<<<< Updated upstream
+=======
+        Route::get('/customers', \App\Livewire\Admin\Customers\Index::class)
+            ->name('admin.customers');
+
+        Route::get('/categories', \App\Livewire\Admin\CategoryProduct::class)
+            ->name('admin.categories');
+
+        Route::post('/logout', [AdminAuthController::class, 'logout'])
+        ->name('admin.logout');
+        Route::get('/invoices', InvoicesIndex::class)
+            ->name('admin.invoices');
+
+        Route::get('/payments', PaymentsIndex::class)
+            ->name('admin.payments');
+            
+        Route::get('/receivables', ReceivablesIndex::class)
+            ->name('admin.receivables');
+
+>>>>>>> Stashed changes
         Route::post('/logout', [AdminAuthController::class, 'logout'])
             ->name('admin.logout');
     });
