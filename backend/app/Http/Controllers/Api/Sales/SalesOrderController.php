@@ -19,6 +19,9 @@ class SalesOrderController extends Controller
         $perPage = (int) $request->get('per_page', 10);
         $perPage = max(1, min($perPage, 50));
 
+        $user = $request->user();
+        $employeeId = $user?->employee_id;
+
         $query = DB::table('sales_orders as so')
             ->leftJoin('customers as c', 'so.customer_id', '=', 'c.id')
             ->leftJoin('employees as e', 'so.employee_id', '=', 'e.id')
@@ -50,6 +53,11 @@ class SalesOrderController extends Controller
 
         if (!empty($customerId)) {
             $query->where('so.customer_id', $customerId);
+        }
+
+        // Chỉ hiển thị đơn hàng của nhân viên đang đăng nhập
+        if (!empty($employeeId)) {
+            $query->where('so.employee_id', $employeeId);
         }
 
         $data = $query
@@ -239,10 +247,10 @@ class SalesOrderController extends Controller
             ], 404);
         }
 
-        if ($order->status !== 'draft') {
+        if (! in_array($order->status, ['draft', 'rejected'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Chỉ được sửa đơn hàng ở trạng thái draft.',
+                'message' => 'Chỉ được cập nhật đơn hàng ở trạng thái draft hoặc rejected.',
             ], 422);
         }
 
@@ -255,7 +263,7 @@ class SalesOrderController extends Controller
 
             $products = DB::table('products')
                 ->whereIn('id', $productIds)
-                ->select('id', 'price', 'name')
+                ->select('id', 'price')
                 ->get()
                 ->keyBy('id');
 
