@@ -89,12 +89,15 @@ const QUICK_FILTERS = [
 
 function SalesOrderListPage() {
   const navigate = useNavigate();
-  const { hasPermission } = useAuth();
+  const { hasPermission, user } = useAuth();
 
   const [keyword, setKeyword] = useState("");
   const [debouncedKeyword, setDebouncedKeyword] = useState("");
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
+
+  const employeeName =
+    user?.employee?.name || user?.name || "Nhân viên đang đăng nhập";
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -126,7 +129,9 @@ function SalesOrderListPage() {
       0
     );
 
-    const draftCount = (orders || []).filter((item) => item.status === "draft").length;
+    const draftCount = (orders || []).filter(
+      (item) => item.status === "draft"
+    ).length;
     const submittedCount = (orders || []).filter(
       (item) => item.status === "submitted"
     ).length;
@@ -177,11 +182,16 @@ function SalesOrderListPage() {
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <div className="text-sm font-medium text-teal-600">Quản lý bán hàng</div>
-            <h1 className="mt-1 text-2xl font-bold text-slate-900">Đơn bán hàng</h1>
+            <div className="text-sm font-medium text-teal-600">
+              Quản lý bán hàng
+            </div>
+            <h1 className="mt-1 text-2xl font-bold text-slate-900">
+              Đơn bán hàng
+            </h1>
             <p className="mt-2 text-sm text-slate-500">
-              Quản lý danh sách đơn hàng, theo dõi tiến độ xử lý và thao tác nhanh
-              theo từng trạng thái.
+              Chỉ hiển thị các đơn hàng do{" "}
+              <span className="font-medium text-slate-700">{employeeName}</span>{" "}
+              tạo ra.
             </p>
           </div>
 
@@ -320,12 +330,15 @@ function SalesOrderListPage() {
               Danh sách đơn hàng
             </div>
             <div className="mt-1 text-sm text-slate-500">
-              Theo dõi và thao tác trực tiếp trên từng đơn hàng
+              Chỉ hiển thị đơn hàng của nhân viên đang đăng nhập
             </div>
           </div>
 
           <div className="text-sm text-slate-500">
-            Tổng: <span className="font-semibold text-slate-900">{pagination.total}</span>
+            Tổng:{" "}
+            <span className="font-semibold text-slate-900">
+              {pagination.total}
+            </span>
           </div>
         </div>
 
@@ -334,7 +347,9 @@ function SalesOrderListPage() {
             Đang tải danh sách đơn hàng...
           </div>
         ) : error ? (
-          <div className="px-5 py-12 text-center text-sm text-rose-500">{error}</div>
+          <div className="px-5 py-12 text-center text-sm text-rose-500">
+            {error}
+          </div>
         ) : orders.length === 0 ? (
           <div className="px-5 py-12 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
@@ -378,10 +393,17 @@ function SalesOrderListPage() {
                   const busy = actionLoadingId === order.id;
 
                   return (
-                    <tr key={order.id} className="border-t border-slate-100 align-top hover:bg-slate-50/50">
+                    <tr
+                      key={order.id}
+                      className="border-t border-slate-100 align-top hover:bg-slate-50/50"
+                    >
                       <td className="px-4 py-5">
-                        <div className="font-semibold text-slate-900">{order.order_no}</div>
-                        <div className="mt-1 text-xs text-slate-400">Mã nhận diện đơn hàng</div>
+                        <div className="font-semibold text-slate-900">
+                          {order.order_no}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-400">
+                          Mã nhận diện đơn hàng
+                        </div>
                       </td>
 
                       <td className="px-4 py-5">
@@ -463,24 +485,23 @@ function SalesOrderListPage() {
 
                           {!["cancelled", "delivered", "sent_to_warehouse"].includes(
                             order.status
-                          ) &&
-                            canCancelOrder && (
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() =>
-                                  handleAction(
-                                    "cancel",
-                                    order.id,
-                                    "Đã hủy đơn hàng"
-                                  )
-                                }
-                                className="inline-flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-rose-700 disabled:opacity-60"
-                              >
-                                <FiSlash />
-                                Hủy
-                              </button>
-                            )}
+                          ) && canCancelOrder && (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() =>
+                                handleAction(
+                                  "cancel",
+                                  order.id,
+                                  "Đã hủy đơn hàng"
+                                )
+                              }
+                              className="inline-flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-rose-700 disabled:opacity-60"
+                            >
+                              <FiSlash />
+                              Hủy
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -493,8 +514,14 @@ function SalesOrderListPage() {
 
         <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-slate-500">
-            Trang <span className="font-semibold text-slate-900">{pagination.current_page}</span> /{" "}
-            <span className="font-semibold text-slate-900">{pagination.last_page}</span>
+            Trang{" "}
+            <span className="font-semibold text-slate-900">
+              {pagination.current_page}
+            </span>{" "}
+            /{" "}
+            <span className="font-semibold text-slate-900">
+              {pagination.last_page}
+            </span>
           </div>
 
           <div className="flex items-center gap-2">

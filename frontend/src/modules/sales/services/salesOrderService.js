@@ -6,7 +6,7 @@ export const salesOrderService = {
     return response.data;
   },
 
-  async getDetail(id) {
+  async getById(id) {
     const response = await axiosClient.get(`/sales/orders/${id}`);
     return response.data;
   },
@@ -28,11 +28,6 @@ export const salesOrderService = {
 
   async approve(id) {
     const response = await axiosClient.post(`/sales/orders/${id}/approve`);
-    return response.data;
-  },
-
-  async reject(id) {
-    const response = await axiosClient.post(`/sales/orders/${id}/reject`);
     return response.data;
   },
 
